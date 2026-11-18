@@ -1,0 +1,39 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-display: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Source Sans 3', ui-sans-serif, system-ui, sans-serif;
+  --color-canvas: #090712;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(ellipse at top, rgba(109, 40, 217, 0.18), transparent 42%), var(--color-canvas);
+  color: #f6f3ff;
+  font-family: var(--font-sans);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #5b4b86 transparent;
+}
+
+input[type='time'] {
+  color-scheme: dark;
+}
+
+input[type='search']::-webkit-search-cancel-button {
+  filter: invert(1);
+}

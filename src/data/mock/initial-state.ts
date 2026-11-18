@@ -1,0 +1,185 @@
+import type { Dealer, PokerTable, RoomSnapshot } from '../../types/room.ts'
+import { zonedTimeToUtc } from '../../utils/time.ts'
+
+const TABLE_SEEDS: PokerTable[] = [
+  {
+    id: 'HN-02',
+    gameType: 'tournament',
+    status: 'open',
+    dealerId: 'CC63',
+    timelineColor: '#7C3AED',
+    row: 'top',
+    seat: 1,
+  },
+  {
+    id: 'HN-04',
+    gameType: 'tournament',
+    status: 'open',
+    dealerId: 'CC64',
+    timelineColor: '#6D28D9',
+    row: 'top',
+    seat: 2,
+  },
+  {
+    id: 'HN-06',
+    gameType: 'tournament',
+    status: 'open',
+    dealerId: 'CC65',
+    timelineColor: '#A855F7',
+    row: 'top',
+    seat: 3,
+  },
+  {
+    id: 'HN-08',
+    gameType: 'unassigned',
+    status: 'closed',
+    dealerId: null,
+    timelineColor: '#F97316',
+    row: 'top',
+    seat: 4,
+  },
+  {
+    id: 'HN-10',
+    gameType: 'cash',
+    status: 'open',
+    dealerId: 'CC67',
+    timelineColor: '#10B981',
+    row: 'top',
+    seat: 5,
+  },
+  {
+    id: 'HN-12',
+    gameType: 'unassigned',
+    status: 'closed',
+    dealerId: null,
+    timelineColor: '#F43F5E',
+    row: 'top',
+    seat: 6,
+  },
+  {
+    id: 'HN-03',
+    gameType: 'tournament',
+    status: 'open',
+    dealerId: 'CC69',
+    timelineColor: '#38BDF8',
+    row: 'bottom',
+    seat: 2,
+  },
+  {
+    id: 'HN-05',
+    gameType: 'tournament',
+    status: 'open',
+    dealerId: 'CC70',
+    timelineColor: '#8B5CF6',
+    row: 'bottom',
+    seat: 3,
+  },
+  {
+    id: 'HN-07',
+    gameType: 'unassigned',
+    status: 'closed',
+    dealerId: null,
+    timelineColor: '#FB7185',
+    row: 'bottom',
+    seat: 4,
+  },
+  {
+    id: 'HN-09',
+    gameType: 'unassigned',
+    status: 'closed',
+    dealerId: null,
+    timelineColor: '#2DD4BF',
+    row: 'bottom',
+    seat: 5,
+  },
+  {
+    id: 'HN-11',
+    gameType: 'cash',
+    status: 'open',
+    dealerId: 'CC73',
+    timelineColor: '#A3E635',
+    row: 'bottom',
+    seat: 6,
+  },
+]
+
+const DEALER_SEEDS: Dealer[] = [
+  {
+    id: 'CC63',
+    displayName: 'CC63',
+    status: 'assigned',
+    currentTableId: 'HN-02',
+    isAvailable: false,
+  },
+  {
+    id: 'CC64',
+    displayName: 'CC64',
+    status: 'assigned',
+    currentTableId: 'HN-04',
+    isAvailable: false,
+  },
+  {
+    id: 'CC65',
+    displayName: 'CC65',
+    status: 'assigned',
+    currentTableId: 'HN-06',
+    isAvailable: false,
+  },
+  { id: 'CC66', displayName: 'CC66', status: 'available', currentTableId: null, isAvailable: true },
+  {
+    id: 'CC67',
+    displayName: 'CC67',
+    status: 'assigned',
+    currentTableId: 'HN-10',
+    isAvailable: false,
+  },
+  { id: 'CC68', displayName: 'CC68', status: 'available', currentTableId: null, isAvailable: true },
+  {
+    id: 'CC69',
+    displayName: 'CC69',
+    status: 'assigned',
+    currentTableId: 'HN-03',
+    isAvailable: false,
+  },
+  {
+    id: 'CC70',
+    displayName: 'CC70',
+    status: 'assigned',
+    currentTableId: 'HN-05',
+    isAvailable: false,
+  },
+  { id: 'CC71', displayName: 'CC71', status: 'available', currentTableId: null, isAvailable: true },
+  { id: 'CC72', displayName: 'CC72', status: 'available', currentTableId: null, isAvailable: true },
+  {
+    id: 'CC73',
+    displayName: 'CC73',
+    status: 'assigned',
+    currentTableId: 'HN-11',
+    isAvailable: false,
+  },
+]
+
+export function createInitialSnapshot(): RoomSnapshot {
+  const clock = zonedTimeToUtc(2026, 11, 17, 19, 44, 0).toISOString()
+  const segmentStart = zonedTimeToUtc(2026, 11, 17, 17, 0, 0).toISOString()
+  const dealers = DEALER_SEEDS.map((dealer) => ({ ...dealer }))
+  return {
+    version: 1,
+    clock,
+    settings: {
+      roomOpen: true,
+      rotationMode: 'auto',
+      rotationIntervalMinutes: 30,
+    },
+    tables: TABLE_SEEDS.map((table) => ({ ...table })),
+    dealers,
+    segments: dealers.map((dealer) => ({
+      id: `initial-${dealer.id}`,
+      dealerId: dealer.id,
+      kind: dealer.status === 'assigned' ? 'table' : 'available',
+      tableId: dealer.currentTableId,
+      start: segmentStart,
+      end: null,
+    })),
+  }
+}
