@@ -14,24 +14,32 @@ export function Dashboard({
   subtitle: string
   emphasis: 'floor' | 'timeline'
 }) {
-  const floor = <FloorPlan />
-  const timeline = <RotationTimeline tall={emphasis === 'timeline'} />
-
   return (
-    <div className="flex flex-col gap-3 p-3 lg:p-4">
+    <div className="flex h-full min-h-0 min-w-0 flex-col gap-2 overflow-hidden p-2">
       <PageHeader title={title} subtitle={subtitle} />
       <SummaryBar />
       <SimClockBar />
-      <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="flex min-w-0 flex-col gap-3">
-          {emphasis === 'floor' ? floor : null}
-          {timeline}
-          {emphasis === 'timeline' ? floor : null}
+      <div className="grid min-h-0 min-w-0 flex-1 grid-rows-[minmax(0,1fr)_190px] gap-2 overflow-hidden lg:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-1">
+        <div className="flex min-h-0 min-w-0 flex-col gap-2 overflow-hidden">
+          <div
+            className={
+              emphasis === 'floor'
+                ? 'h-[40%] min-h-0 shrink-0 overflow-hidden'
+                : 'h-[28%] min-h-0 shrink-0 overflow-hidden'
+            }
+          >
+            <FloorPlan />
+          </div>
+          <div className="min-h-0 flex-1 overflow-hidden">
+            <RotationTimeline />
+          </div>
         </div>
-        <aside className="flex flex-col gap-3">
-          <RotationControls />
-          <UpcomingPanel />
-          <TableLegend />
+        <aside className="min-h-0 min-w-0 overflow-y-auto overscroll-contain">
+          <div className="flex flex-col gap-2">
+            <RotationControls />
+            <UpcomingPanel />
+            <TableLegend />
+          </div>
         </aside>
       </div>
     </div>

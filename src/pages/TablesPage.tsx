@@ -11,12 +11,12 @@ export function TablesPage() {
   )
 
   return (
-    <div className="flex flex-col gap-3 p-3 lg:p-4">
+    <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden p-2">
       <PageHeader
         title="Tables"
         subtitle="Onze tables physiques. Ouvrir demande un type de jeu. Fermer retire le croupier."
       />
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid min-h-0 flex-1 content-start gap-3 overflow-auto overscroll-contain md:grid-cols-2 xl:grid-cols-3">
         {tables.map((table) => (
           <article key={table.id} className="rounded-2xl border border-white/10 bg-[#141226] p-3">
             <button

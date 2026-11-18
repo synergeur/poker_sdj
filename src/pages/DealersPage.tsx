@@ -29,12 +29,12 @@ export function DealersPage() {
   if (!snapshot) return null
 
   return (
-    <div className="flex flex-col gap-3 p-3 lg:p-4">
+    <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden p-2">
       <PageHeader
         title="Croupiers"
         subtitle="Onze identifiants fictifs. Le statut change tout de suite le plan de salle et la frise."
       />
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
         <input
           id="dealer-search"
           name="dealer-search"
@@ -64,9 +64,13 @@ export function DealersPage() {
           Aucun croupier ne correspond à ce filtre.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-white/10">
+        <div
+          className="min-h-0 flex-1 overflow-auto overscroll-contain rounded-2xl border border-white/10"
+          data-testid="dealer-scroll"
+          aria-label="Liste des croupiers"
+        >
           <table className="w-full min-w-[680px] text-left text-sm">
-            <thead className="bg-[#1b1630] text-[11px] tracking-wide text-violet-100/50 uppercase">
+            <thead className="sticky top-0 z-10 bg-[#1b1630] text-[11px] tracking-wide text-violet-100/50 uppercase">
               <tr>
                 <th className="px-3 py-2 font-medium">Croupier</th>
                 <th className="px-3 py-2 font-medium">Statut</th>

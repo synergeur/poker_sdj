@@ -19,7 +19,7 @@ function appearance(segment: ActivitySegment, color: string | undefined) {
   return { color: '#45415c', label: 'Disponible', text: '#f3efff' }
 }
 
-export function RotationTimeline({ tall = false }: { tall?: boolean }) {
+export function RotationTimeline() {
   const { snapshot, select } = useRoom()
   const [view, setView] = useState<TimelineView>('rotation')
   if (!snapshot) return null
@@ -31,15 +31,15 @@ export function RotationTimeline({ tall = false }: { tall?: boolean }) {
   const nowRatio = Math.min(1, Math.max(0, (now - windowStart) / span))
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-[#141226] p-3 md:p-4">
-      <header className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 className="font-display text-base font-semibold">
+    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#141226] p-2">
+      <header className="mb-1 flex shrink-0 flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="font-display text-sm font-semibold">
             Pauses & rotations — vue chronologique
           </h2>
-          <p className="text-xs text-violet-100/55">
+          <p className="truncate text-[11px] text-violet-100/55">
             Une ligne par croupier. Les hachures après {formatTime(snapshot.clock)} prolongent
-            l'affectation actuelle. Aucun futur n'est calculé.
+            l'affectation actuelle.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -71,13 +71,23 @@ export function RotationTimeline({ tall = false }: { tall?: boolean }) {
         </div>
       </header>
 
-      <div className="overflow-x-auto">
-        <div className="min-w-[920px]">
-          <div className="grid grid-cols-[88px_1fr] items-end">
+      <div
+        className="min-h-0 flex-1 overflow-auto overscroll-contain"
+        data-testid="dealer-scroll"
+        aria-label="Liste des croupiers"
+      >
+        <div className="min-w-[760px]">
+          <div className="sticky top-0 z-30 grid grid-cols-[88px_1fr] items-end bg-[#141226]">
             <span className="px-2 pb-1 text-[11px] tracking-wide text-violet-200/50 uppercase">
               Croupier
             </span>
             <div className="relative h-6">
+              <span
+                className="absolute top-0 z-10 -translate-x-1/2 rounded bg-white px-1 text-[10px] font-semibold text-slate-900"
+                style={{ left: `${nowRatio * 100}%` }}
+              >
+                {formatTime(snapshot.clock)}
+              </span>
               {MARKS.map((mark, index) => (
                 <span
                   key={mark}
@@ -90,7 +100,7 @@ export function RotationTimeline({ tall = false }: { tall?: boolean }) {
             </div>
           </div>
 
-          <div className={cx('mt-1', tall && 'min-h-[460px]')}>
+          <div className="mt-1">
             {snapshot.dealers.map((dealer, index) => (
               <div
                 key={dealer.id}
@@ -101,7 +111,7 @@ export function RotationTimeline({ tall = false }: { tall?: boolean }) {
               >
                 <button
                   type="button"
-                  className="flex h-11 items-center gap-2 px-2 text-left text-sm font-semibold hover:text-white"
+                  className="sticky left-0 z-20 flex h-9 items-center gap-2 bg-[#16132a] px-2 text-left text-sm font-semibold hover:text-white"
                   onClick={() => select({ type: 'dealer', id: dealer.id })}
                 >
                   <span
@@ -115,7 +125,7 @@ export function RotationTimeline({ tall = false }: { tall?: boolean }) {
                   />
                   {dealer.displayName}
                 </button>
-                <div className="relative h-11 border-l border-white/5">
+                <div className="relative h-9 border-l border-white/5">
                   {MARKS.map((mark, markIndex) => (
                     <span
                       key={mark}
@@ -175,16 +185,10 @@ export function RotationTimeline({ tall = false }: { tall?: boolean }) {
                       )
                     })}
                   <span
-                    data-testid="now-line"
+                    data-testid={index === 0 ? 'now-line' : undefined}
                     className="pointer-events-none absolute inset-y-0 z-10 border-l border-dashed border-white"
                     style={{ left: `${nowRatio * 100}%` }}
-                  >
-                    {index === 0 ? (
-                      <span className="absolute -top-0 left-1 rounded bg-white px-1 text-[10px] font-semibold text-slate-900">
-                        {formatTime(snapshot.clock)}
-                      </span>
-                    ) : null}
-                  </span>
+                  />
                 </div>
               </div>
             ))}
@@ -192,7 +196,7 @@ export function RotationTimeline({ tall = false }: { tall?: boolean }) {
         </div>
       </div>
 
-      <footer className="mt-3 flex flex-wrap gap-3 text-[11px] text-violet-100/70">
+      <footer className="mt-1 flex shrink-0 gap-3 overflow-x-auto text-[11px] whitespace-nowrap text-violet-100/70">
         <span className="inline-flex items-center gap-1">
           <span className="h-2.5 w-4 rounded-sm bg-violet-500" /> Affectation, couleur propre à la
           table

@@ -69,14 +69,14 @@ export function SummaryBar() {
   ]
 
   return (
-    <section className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+    <section className="flex shrink-0 gap-2 overflow-x-auto">
       {cards.map((card) => {
         const Icon = card.icon
         return (
           <article
             key={card.id}
             data-testid={card.id}
-            className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#16122b] px-3 py-2.5"
+            className="flex min-w-[148px] shrink-0 items-center gap-2 rounded-2xl border border-white/10 bg-[#16122b] px-2.5 py-1.5"
           >
             <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${card.tint}`}>
               <Icon size={16} />
@@ -96,7 +96,7 @@ export function SummaryBar() {
       {summary.openWithoutDealer > 0 ? (
         <p
           data-testid="summary-gap"
-          className="col-span-full rounded-xl border border-amber-300/30 bg-amber-400/10 px-3 py-2 text-sm text-amber-100"
+          className="shrink-0 self-center rounded-xl border border-amber-300/30 bg-amber-400/10 px-3 py-1.5 text-xs whitespace-nowrap text-amber-100"
         >
           {summary.openWithoutDealer} table{summary.openWithoutDealer > 1 ? 's' : ''} ouverte
           {summary.openWithoutDealer > 1 ? 's' : ''} sans croupier.

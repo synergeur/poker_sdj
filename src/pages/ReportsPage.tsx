@@ -20,12 +20,12 @@ export function ReportsPage() {
   const offShift = snapshot.dealers.filter((dealer) => dealer.status === 'off_shift')
 
   return (
-    <div className="flex flex-col gap-3 p-3 lg:p-4">
+    <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden p-2">
       <PageHeader
         title="Aperçu du quart"
         subtitle="Comptages issus de l'état actuel. Pas de rapport financier, pas de paie, pas d'historique de production."
       />
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid min-h-0 flex-1 content-start gap-3 overflow-auto overscroll-contain lg:grid-cols-2">
         <section className="rounded-2xl border border-white/10 bg-[#141226] p-4">
           <h2 className="font-display text-lg font-semibold">Salle</h2>
           <dl>

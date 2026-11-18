@@ -21,7 +21,7 @@ function PokerTableButton({ table }: { table: PokerTable }) {
       aria-label={`Table ${table.id}, ${typeLabel}, ${dealerLabel}`}
       onClick={() => select({ type: 'table', id: table.id })}
       className={cx(
-        'relative flex aspect-[2.15/1] w-full min-w-[112px] flex-col items-center justify-center rounded-full border-[3px] px-3 text-center transition hover:-translate-y-0.5',
+        'relative flex h-full min-h-0 w-full flex-col items-center justify-center overflow-hidden rounded-full border-[3px] px-2 text-center',
         closed && 'opacity-80',
         selected && 'outline-2 outline-offset-[3px] outline-white',
       )}
@@ -38,10 +38,12 @@ function PokerTableButton({ table }: { table: PokerTable }) {
         title="Couleur de cette table dans la frise"
       />
       {closed ? <Lock size={13} className="absolute top-[18%] left-[18%] text-slate-300" /> : null}
-      <span className="font-display text-sm font-semibold tracking-wide text-white md:text-base">
+      <span className="font-display truncate text-xs font-semibold tracking-wide text-white">
         {table.id}
       </span>
-      <span className="text-[10px] tracking-[0.14em] text-white/70 uppercase">{typeLabel}</span>
+      <span className="truncate text-[10px] tracking-[0.12em] text-white/70 uppercase">
+        {typeLabel}
+      </span>
       <span className={cx('text-xs font-semibold', gap ? 'text-amber-200' : 'text-white')}>
         {closed ? '—' : dealerLabel}
       </span>
@@ -51,19 +53,22 @@ function PokerTableButton({ table }: { table: PokerTable }) {
 
 const SEAT_START = [
   '',
-  'lg:col-start-1',
-  'lg:col-start-2',
-  'lg:col-start-3',
-  'lg:col-start-4',
-  'lg:col-start-5',
-  'lg:col-start-6',
+  'col-start-1',
+  'col-start-2',
+  'col-start-3',
+  'col-start-4',
+  'col-start-5',
+  'col-start-6',
 ]
 
 function Row({ tables, alignRight = false }: { tables: PokerTable[]; alignRight?: boolean }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+    <div className="grid h-full min-h-0 grid-cols-6 gap-2">
       {tables.map((table) => (
-        <div key={table.id} className={alignRight ? SEAT_START[table.seat] : undefined}>
+        <div
+          key={table.id}
+          className={alignRight ? `min-h-0 ${SEAT_START[table.seat]}` : 'min-h-0'}
+        >
           <PokerTableButton table={table} />
         </div>
       ))}
@@ -79,24 +84,19 @@ export function FloorPlan() {
     .filter((table) => table.row === 'bottom')
     .sort((a, b) => a.seat - b.seat)
   return (
-    <section className="rounded-2xl border border-amber-100/10 bg-[#1a100c] p-3 shadow-inner md:p-4">
-      <header className="mb-3 flex flex-wrap items-end justify-between gap-2 text-amber-50">
-        <div>
-          <h2 className="flex items-center gap-2 font-display text-base font-semibold">
-            <Map size={16} />
-            Plan de salle
-          </h2>
-          <p className="text-xs text-amber-100/60">
-            Cliquez une table pour l'ouvrir, la fermer ou changer son croupier. Le contour suit le
-            type de jeu. La pastille est la couleur unique de la frise.
-          </p>
-        </div>
+    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-amber-100/10 bg-[#1a100c] p-2 shadow-inner">
+      <header className="mb-1 flex shrink-0 items-center justify-between gap-2 text-amber-50">
+        <h2 className="flex items-center gap-2 font-display text-sm font-semibold">
+          <Map size={15} />
+          Plan de salle
+        </h2>
+        <p className="truncate text-[11px] text-amber-100/60">
+          Cliquez une table. Le contour est le type de jeu, la pastille est la couleur de la frise.
+        </p>
       </header>
-      <div className="rounded-xl bg-[radial-gradient(ellipse_at_20%_0%,rgba(255,196,120,0.18),transparent_42%),radial-gradient(ellipse_at_80%_100%,rgba(120,50,20,0.35),transparent_40%),linear-gradient(180deg,#4a2c1c,#1a0e0a)] p-3 md:p-4">
+      <div className="grid min-h-0 flex-1 grid-rows-2 gap-2 overflow-hidden rounded-xl bg-[radial-gradient(ellipse_at_20%_0%,rgba(255,196,120,0.18),transparent_42%),radial-gradient(ellipse_at_80%_100%,rgba(120,50,20,0.35),transparent_40%),linear-gradient(180deg,#4a2c1c,#1a0e0a)] p-2">
         <Row tables={top} />
-        <div className="mt-3 lg:mt-4">
-          <Row tables={bottom} alignRight />
-        </div>
+        <Row tables={bottom} alignRight />
       </div>
     </section>
   )

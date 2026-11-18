@@ -8,12 +8,12 @@ export function PageHeader({ title, subtitle }: { title: string; subtitle?: stri
   const roomOpen = snapshot.settings.roomOpen
 
   return (
-    <header className="flex flex-wrap items-start justify-between gap-3">
+    <header className="flex shrink-0 items-center justify-between gap-3">
       <div className="min-w-0">
-        <h1 className="font-display text-xl font-semibold tracking-tight text-white md:text-[1.65rem]">
+        <h1 className="font-display truncate text-lg font-semibold tracking-tight text-white">
           {title}
         </h1>
-        {subtitle ? <p className="mt-1 max-w-3xl text-sm text-violet-200/70">{subtitle}</p> : null}
+        {subtitle ? <p className="truncate text-xs text-violet-200/70">{subtitle}</p> : null}
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <div className="rounded-2xl border border-white/10 bg-[#141226] px-3 py-2">

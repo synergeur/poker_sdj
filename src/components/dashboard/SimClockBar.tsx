@@ -18,15 +18,13 @@ export function SimClockBar() {
   if (!snapshot) return null
 
   return (
-    <section className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-[#141226] px-3 py-2">
-      <div className="mr-auto min-w-[220px]">
-        <p className="text-[11px] tracking-[0.14em] text-violet-200/55 uppercase">
-          Horloge simulée
-        </p>
-        <p className="text-xs text-violet-100/60">
-          Elle déplace le repère 17:00 – 23:00. Elle ne lance aucune rotation.
-        </p>
-      </div>
+    <section
+      title="L'horloge déplace le repère 17:00 – 23:00. Elle ne lance aucune rotation."
+      className="flex shrink-0 items-center gap-2 overflow-x-auto rounded-2xl border border-white/10 bg-[#141226] px-3 py-1.5"
+    >
+      <p className="mr-auto shrink-0 text-[11px] tracking-[0.14em] text-violet-200/55 uppercase">
+        Horloge simulée
+      </p>
       <button
         type="button"
         data-testid="clock-play"
