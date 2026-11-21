@@ -54,6 +54,18 @@ npm run build
 
 Copy `.env.example` to `.env` if you want the file present. The defaults already match that example: mock data on, Firebase off. Every `VITE_` variable is exposed to the browser. Do not put private service-account credentials in them.
 
+## Heroku
+
+The app is a Node app: `package.json` at the root makes Heroku select the Node.js buildpack. That buildpack does not serve files itself. With no `Procfile`, its web process is `npm start`.
+
+`heroku-postbuild` compiles the Vite app into `dist` before devDependencies are removed. `start` then runs `serve` on `0.0.0.0` and `$PORT`, and `--single` sends routes such as `/dealers` to `index.html`. Node 22 is set in `engines`.
+
+On an existing app, point it at the Node.js buildpack before the next deploy:
+
+```bash
+heroku buildpacks:set heroku/nodejs -a YOUR_APP_NAME
+```
+
 ## Layout
 
 - `src/features/room/operations.ts` — open, close, assign, break, clock
