@@ -9,16 +9,27 @@ import {
   type ReactNode,
 } from 'react'
 import { createRoomRepository } from '../../repositories/index.ts'
-import type { RoomSnapshot, RotationInterval, RotationMode, Selection } from '../../types/room.ts'
+import type {
+  RoomSnapshot,
+  RotationInterval,
+  RotationMode,
+  Selection,
+  Weekday,
+} from '../../types/room.ts'
 import {
   advanceClock as advanceClockOperation,
   assignDealer as assignDealerOperation,
   closeTable as closeTableOperation,
   findAssignmentConflicts,
   openTable as openTableOperation,
+  addAvailability as addAvailabilityOperation,
+  addComment as addCommentOperation,
+  addEvaluation as addEvaluationOperation,
+  removeAvailability as removeAvailabilityOperation,
+  setCommentAwareness as setCommentAwarenessOperation,
   setDealerStatus as setDealerStatusOperation,
   setGameType as setGameTypeOperation,
-  setRoomOpen as setRoomOpenOperation,
+  setNoteAuthor as setNoteAuthorOperation,
   setRotationInterval as setRotationIntervalOperation,
   setRotationMode as setRotationModeOperation,
   setShiftTime as setShiftTimeOperation,
@@ -42,7 +53,15 @@ interface RoomContextValue {
   assignDealer: (tableId: string, dealerId: string) => void
   unassignDealer: (tableId: string) => void
   setDealerStatus: (dealerId: string, status: 'available' | 'on_break' | 'off_shift') => void
-  setRoomOpen: (open: boolean) => void
+  setNoteAuthor: (author: string) => void
+  addAvailability: (dealerId: string, day: Weekday, start: string, end: string) => void
+  removeAvailability: (dealerId: string, slotId: string) => void
+  addEvaluation: (dealerId: string, input: { author: string; score: number; note: string }) => void
+  addComment: (
+    dealerId: string,
+    input: { author: string; text: string; dealerAware: boolean },
+  ) => void
+  setCommentAwareness: (dealerId: string, commentId: string, dealerAware: boolean) => void
   setRotationMode: (mode: RotationMode) => void
   setRotationInterval: (minutes: RotationInterval) => void
   advanceClock: (minutes: number) => void
@@ -149,7 +168,17 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       unassignDealer: (tableId) => apply((current) => unassignDealerOperation(current, tableId)),
       setDealerStatus: (dealerId, status) =>
         apply((current) => setDealerStatusOperation(current, dealerId, status)),
-      setRoomOpen: (open) => apply((current) => setRoomOpenOperation(current, open)),
+      setNoteAuthor: (author) => apply((current) => setNoteAuthorOperation(current, author)),
+      addAvailability: (dealerId, day, start, end) =>
+        apply((current) => addAvailabilityOperation(current, dealerId, day, start, end)),
+      removeAvailability: (dealerId, slotId) =>
+        apply((current) => removeAvailabilityOperation(current, dealerId, slotId)),
+      addEvaluation: (dealerId, input) =>
+        apply((current) => addEvaluationOperation(current, dealerId, input)),
+      addComment: (dealerId, input) =>
+        apply((current) => addCommentOperation(current, dealerId, input)),
+      setCommentAwareness: (dealerId, commentId, dealerAware) =>
+        apply((current) => setCommentAwarenessOperation(current, dealerId, commentId, dealerAware)),
       setRotationMode: (mode) => apply((current) => setRotationModeOperation(current, mode)),
       setRotationInterval: (minutes) =>
         apply((current) => setRotationIntervalOperation(current, minutes)),

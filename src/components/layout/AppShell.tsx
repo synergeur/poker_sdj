@@ -7,15 +7,47 @@ import { Inspector } from '../inspector/Inspector.tsx'
 const NAV = [
   { to: '/', label: 'Salle en direct', icon: Radio, end: true },
   { to: '/rotations', label: 'Rotations & pauses', icon: RefreshCcw, end: false },
-  { to: '/dealers', label: 'Croupiers', icon: Users, end: false },
   { to: '/tables', label: 'Tables', icon: LayoutGrid, end: false },
   { to: '/reports', label: 'Rapports', icon: ChartColumn, end: false },
   { to: '/settings', label: 'Paramètres', icon: Settings, end: false },
 ]
 
+const DEALERS_NAV = { to: '/dealers', label: 'Croupiers', icon: Users, end: false }
+
+function NavItem({
+  to,
+  label,
+  icon: Icon,
+  end,
+  className,
+}: {
+  to: string
+  label: string
+  icon: typeof Users
+  end: boolean
+  className?: string
+}) {
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      data-testid={`nav-${to}`}
+      className={({ isActive }) =>
+        cx(
+          'flex flex-col items-center gap-1 rounded-2xl px-1 py-2 text-center text-[11px] leading-tight text-violet-100/75 transition hover:bg-white/5 hover:text-white',
+          isActive && 'bg-violet-600 text-white shadow-md shadow-violet-950/40',
+          className,
+        )
+      }
+    >
+      <Icon size={18} />
+      {label}
+    </NavLink>
+  )
+}
+
 export function AppShell() {
-  const { ready, snapshot, notice, clearNotice, conflicts, setRoomOpen } = useRoom()
-  const roomOpen = snapshot?.settings.roomOpen ?? false
+  const { ready, notice, clearNotice, conflicts } = useRoom()
 
   return (
     <div className="flex h-dvh max-h-dvh w-full max-w-full overflow-hidden bg-[#090712] text-violet-50">
@@ -32,37 +64,11 @@ export function AppShell() {
           </span>
         </div>
         <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-2 pb-2">
-          {NAV.map((item) => {
-            const Icon = item.icon
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                data-testid={`nav-${item.to}`}
-                className={({ isActive }) =>
-                  cx(
-                    'flex flex-col items-center gap-1 rounded-2xl px-1 py-2 text-center text-[11px] leading-tight text-violet-100/75 transition hover:bg-white/5 hover:text-white',
-                    isActive && 'bg-violet-600 text-white shadow-md shadow-violet-950/40',
-                  )
-                }
-              >
-                <Icon size={18} />
-                {item.label}
-              </NavLink>
-            )
-          })}
+          {NAV.map((item) => (
+            <NavItem key={item.to} {...item} />
+          ))}
+          <NavItem {...DEALERS_NAV} className="mt-auto" />
         </nav>
-        <button
-          type="button"
-          onClick={() => setRoomOpen(!roomOpen)}
-          className="m-2 flex shrink-0 items-center justify-center gap-2 rounded-full border border-white/10 px-2 py-2 text-[11px] font-semibold"
-        >
-          <span
-            className={cx('h-2 w-2 rounded-full', roomOpen ? 'bg-emerald-400' : 'bg-rose-400')}
-          />
-          {roomOpen ? 'Salle ouverte' : 'Salle fermée'}
-        </button>
       </aside>
 
       <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">

@@ -1,11 +1,9 @@
 import { useRoom } from '../../features/room/RoomContext.tsx'
-import { cx } from '../../utils/cx.ts'
 import { formatShiftDate, formatTime } from '../../utils/time.ts'
 
 export function PageHeader({ title, subtitle }: { title: string; subtitle?: string }) {
-  const { snapshot, setRoomOpen } = useRoom()
+  const { snapshot } = useRoom()
   if (!snapshot) return null
-  const roomOpen = snapshot.settings.roomOpen
 
   return (
     <header className="flex shrink-0 items-center justify-between gap-3">
@@ -31,18 +29,6 @@ export function PageHeader({ title, subtitle }: { title: string; subtitle?: stri
             {formatTime(snapshot.clock)}
           </p>
         </div>
-        <button
-          type="button"
-          data-testid="room-status"
-          aria-pressed={roomOpen}
-          onClick={() => setRoomOpen(!roomOpen)}
-          className={cx(
-            'rounded-full px-3 py-2 text-sm font-semibold',
-            roomOpen ? 'bg-emerald-500 text-emerald-950' : 'bg-rose-500 text-white',
-          )}
-        >
-          {roomOpen ? 'Salle ouverte' : 'Salle fermée'}
-        </button>
       </div>
     </header>
   )

@@ -1,4 +1,26 @@
-import type { DealerStatus, GameType, PokerTable, RotationMode } from '../types/room.ts'
+import type { DealerStatus, GameType, PokerTable, RotationMode, Weekday } from '../types/room.ts'
+
+export const WEEKDAYS: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+
+export const WEEKDAY_LABEL: Record<Weekday, string> = {
+  mon: 'Lundi',
+  tue: 'Mardi',
+  wed: 'Mercredi',
+  thu: 'Jeudi',
+  fri: 'Vendredi',
+  sat: 'Samedi',
+  sun: 'Dimanche',
+}
+
+export const WEEKDAY_SHORT: Record<Weekday, string> = {
+  mon: 'Lun',
+  tue: 'Mar',
+  wed: 'Mer',
+  thu: 'Jeu',
+  fri: 'Ven',
+  sat: 'Sam',
+  sun: 'Dim',
+}
 
 export const GAME_TYPE_LABEL: Record<GameType, string> = {
   tournament: 'Tournois',
@@ -39,7 +61,7 @@ export const PROTOTYPE_RULES = [
   'Un croupier ne peut occuper qu’une seule table. Une seconde affectation est refusée.',
   'La pause et la fin de quart retirent le croupier. La table reste ouverte et affiche « Sans croupier ».',
   'Changer Tournois / Cash Game garde le croupier en place.',
-  'Le statut « salle ouverte » ou « salle fermée » ne change pas les tables.',
+  'La salle est ouverte dès qu’une table l’est, et fermée seulement quand toutes les tables sont fermées.',
   'L’horloge simulée déplace le repère de temps. Elle ne déplace aucun croupier.',
   'Les barres après l’heure actuelle prolongent l’affectation en cours. Ce n’est pas une rotation calculée.',
   'Le mode et l’intervalle sont mémorisés. Aucun cycle, aucun chip run, aucun déplacement automatique.',

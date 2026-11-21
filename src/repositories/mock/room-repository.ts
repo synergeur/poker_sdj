@@ -1,5 +1,5 @@
 import { createInitialSnapshot } from '../../data/mock/initial-state.ts'
-import type { RoomSnapshot } from '../../types/room.ts'
+import type { Dealer, RoomSettings, RoomSnapshot } from '../../types/room.ts'
 import { browserStore } from '../memory-store.ts'
 import type { KeyValueStore, RoomRepository } from '../types.ts'
 
@@ -19,6 +19,36 @@ function isSnapshot(value: unknown): value is RoomSnapshot {
   )
 }
 
+function asRecord(value: object): Record<string, unknown> {
+  return value as Record<string, unknown>
+}
+
+export function normalizeSnapshot(snapshot: RoomSnapshot): RoomSnapshot {
+  const settings = asRecord(snapshot.settings)
+  const rotationMode = settings.rotationMode === 'manual' ? 'manual' : 'auto'
+  const interval = settings.rotationIntervalMinutes
+  const rotationIntervalMinutes =
+    interval === 15 || interval === 30 || interval === 45 || interval === 60 ? interval : 30
+  const noteAuthor =
+    typeof settings.noteAuthor === 'string' && settings.noteAuthor.trim()
+      ? settings.noteAuthor.trim()
+      : 'Superviseur'
+  const nextSettings: RoomSettings = { rotationMode, rotationIntervalMinutes, noteAuthor }
+  return {
+    ...snapshot,
+    settings: nextSettings,
+    dealers: snapshot.dealers.map((dealer) => {
+      const raw = asRecord(dealer)
+      return {
+        ...dealer,
+        availability: Array.isArray(raw.availability) ? dealer.availability : [],
+        evaluations: Array.isArray(raw.evaluations) ? dealer.evaluations : [],
+        comments: Array.isArray(raw.comments) ? dealer.comments : [],
+      } satisfies Dealer
+    }),
+  }
+}
+
 export function createMockRoomRepository(store: KeyValueStore = browserStore()): RoomRepository {
   return {
     async load() {
@@ -27,7 +57,7 @@ export function createMockRoomRepository(store: KeyValueStore = browserStore()):
       try {
         const parsed: unknown = JSON.parse(raw)
         if (!isSnapshot(parsed)) return createInitialSnapshot()
-        return parsed
+        return normalizeSnapshot(parsed)
       } catch {
         return createInitialSnapshot()
       }

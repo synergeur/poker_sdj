@@ -2,12 +2,16 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createInitialSnapshot } from '../../data/mock/initial-state.ts'
 import { formatTime } from '../../utils/time.ts'
 import {
+  addAvailability,
+  addComment,
+  addEvaluation,
   advanceClock,
   assignDealer,
   closeTable,
   findAssignmentConflicts,
   openTable,
   resetOperationIds,
+  setCommentAwareness,
   setDealerStatus,
   setGameType,
   setRotationInterval,
@@ -187,6 +191,49 @@ describe('clock and rotation settings', () => {
     const early = setShiftTime(initial, 16, 30)
     expect(early.error).toMatch(/17:00/)
     expect(early.snapshot).toBe(initial)
+  })
+
+  it('keeps dealer notes with the author, the date, and whether they were told', () => {
+    const initial = createInitialSnapshot()
+    const at = '2026-11-21T15:00:00.000Z'
+    const empty = addComment(initial, 'CC64', { author: '  ', text: 'Note', dealerAware: false })
+    expect(empty.error).toMatch(/qui écrit/)
+    const added = addComment(initial, 'CC64', {
+      author: 'Camille Roy',
+      text: 'À revoir la façon de couper.',
+      dealerAware: false,
+      at,
+    })
+    expect(added.error).toBeNull()
+    const comment = added.snapshot.dealers.find((dealer) => dealer.id === 'CC64')?.comments[0]
+    expect(comment).toMatchObject({
+      author: 'Camille Roy',
+      text: 'À revoir la façon de couper.',
+      dealerAware: false,
+      at,
+    })
+    const told = setCommentAwareness(added.snapshot, 'CC64', comment!.id, true)
+    expect(
+      told.snapshot.dealers.find((dealer) => dealer.id === 'CC64')?.comments[0]?.dealerAware,
+    ).toBe(true)
+    const overlap = addAvailability(initial, 'CC63', 'mon', '18:00', '20:00')
+    expect(overlap.error).toMatch(/chevauche/)
+    const slot = addAvailability(initial, 'CC63', 'sun', '12:00', '16:00')
+    expect(slot.snapshot.dealers.find((dealer) => dealer.id === 'CC63')?.availability).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ day: 'sun', start: '12:00', end: '16:00' }),
+      ]),
+    )
+    const graded = addEvaluation(slot.snapshot, 'CC68', {
+      author: 'Marc Elbaz',
+      score: 2,
+      note: 'Hésite sur les annonces.',
+      at,
+    })
+    expect(
+      graded.snapshot.dealers.find((dealer) => dealer.id === 'CC68')?.evaluations[0],
+    ).toMatchObject({ author: 'Marc Elbaz', score: 2, at })
+    expectClean(graded.snapshot)
   })
 
   it('stores rotation preferences without creating movement', () => {

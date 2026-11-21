@@ -1,5 +1,26 @@
-import type { Dealer, PokerTable, RoomSnapshot } from '../../types/room.ts'
+import type {
+  AvailabilitySlot,
+  Dealer,
+  DealerComment,
+  DealerEvaluation,
+  PokerTable,
+  RoomSnapshot,
+  Weekday,
+} from '../../types/room.ts'
 import { zonedTimeToUtc } from '../../utils/time.ts'
+
+function nights(
+  prefix: string,
+  days: Weekday[],
+  start = '17:00',
+  end = '23:00',
+): AvailabilitySlot[] {
+  return days.map((day) => ({ id: `${prefix}-${day}`, day, start, end }))
+}
+
+function at(month: number, day: number, hour: number, minute: number): string {
+  return zonedTimeToUtc(2026, month, day, hour, minute, 0).toISOString()
+}
 
 const TABLE_SEEDS: PokerTable[] = [
   {
@@ -103,6 +124,12 @@ const TABLE_SEEDS: PokerTable[] = [
   },
 ]
 
+const EMPTY = {
+  availability: [] as AvailabilitySlot[],
+  evaluations: [] as DealerEvaluation[],
+  comments: [] as DealerComment[],
+}
+
 const DEALER_SEEDS: Dealer[] = [
   {
     id: 'CC63',
@@ -110,6 +137,32 @@ const DEALER_SEEDS: Dealer[] = [
     status: 'assigned',
     currentTableId: 'HN-02',
     isAvailable: false,
+    availability: nights('CC63', ['mon', 'tue', 'wed', 'thu']),
+    evaluations: [
+      {
+        id: 'eval-cc63-1',
+        at: at(11, 3, 21, 15),
+        author: 'Camille Roy',
+        score: 4,
+        note: 'Tient le rythme sur une table tournoi pleine. Annonces claires.',
+      },
+    ],
+    comments: [
+      {
+        id: 'cmt-cc63-1',
+        at: at(10, 28, 18, 40),
+        author: 'Camille Roy',
+        text: 'A coupé la parole à un joueur qui contestait une donne. À reprendre au calme.',
+        dealerAware: false,
+      },
+      {
+        id: 'cmt-cc63-2',
+        at: at(11, 12, 16, 5),
+        author: 'Marc Elbaz',
+        text: 'Bon réflexe sur une mise mal annoncée. Le lui dire au prochain entretien.',
+        dealerAware: true,
+      },
+    ],
   },
   {
     id: 'CC64',
@@ -117,6 +170,11 @@ const DEALER_SEEDS: Dealer[] = [
     status: 'assigned',
     currentTableId: 'HN-04',
     isAvailable: false,
+    ...EMPTY,
+    availability: [
+      ...nights('CC64', ['fri', 'sat']),
+      { id: 'CC64-sun', day: 'sun', start: '12:00', end: '20:00' },
+    ],
   },
   {
     id: 'CC65',
@@ -124,22 +182,65 @@ const DEALER_SEEDS: Dealer[] = [
     status: 'assigned',
     currentTableId: 'HN-06',
     isAvailable: false,
+    ...EMPTY,
+    availability: nights('CC65', ['mon', 'wed', 'fri']),
   },
-  { id: 'CC66', displayName: 'CC66', status: 'available', currentTableId: null, isAvailable: true },
+  {
+    id: 'CC66',
+    displayName: 'CC66',
+    status: 'available',
+    currentTableId: null,
+    isAvailable: true,
+    availability: [
+      ...nights('CC66', ['tue', 'thu']),
+      { id: 'CC66-sat', day: 'sat', start: '12:00', end: '20:00' },
+    ],
+    evaluations: [],
+    comments: [
+      {
+        id: 'cmt-cc66-1',
+        at: at(11, 14, 23, 10),
+        author: 'Camille Roy',
+        text: 'Arrivé en retard deux soirs de suite. Pas encore abordé avec lui.',
+        dealerAware: false,
+      },
+    ],
+  },
   {
     id: 'CC67',
     displayName: 'CC67',
     status: 'assigned',
     currentTableId: 'HN-10',
     isAvailable: false,
+    availability: nights('CC67', ['mon', 'tue', 'wed', 'thu', 'fri']),
+    evaluations: [
+      {
+        id: 'eval-cc67-1',
+        at: at(11, 8, 22, 0),
+        author: 'Marc Elbaz',
+        score: 3,
+        note: 'Distribution correcte. À surveiller quand la table accélère.',
+      },
+    ],
+    comments: [],
   },
-  { id: 'CC68', displayName: 'CC68', status: 'available', currentTableId: null, isAvailable: true },
+  {
+    id: 'CC68',
+    displayName: 'CC68',
+    status: 'available',
+    currentTableId: null,
+    isAvailable: true,
+    ...EMPTY,
+    availability: nights('CC68', ['sat', 'sun'], '12:00', '23:00'),
+  },
   {
     id: 'CC69',
     displayName: 'CC69',
     status: 'assigned',
     currentTableId: 'HN-03',
     isAvailable: false,
+    ...EMPTY,
+    availability: nights('CC69', ['thu', 'fri', 'sat']),
   },
   {
     id: 'CC70',
@@ -147,29 +248,63 @@ const DEALER_SEEDS: Dealer[] = [
     status: 'assigned',
     currentTableId: 'HN-05',
     isAvailable: false,
+    ...EMPTY,
+    availability: nights('CC70', ['mon', 'tue']),
   },
-  { id: 'CC71', displayName: 'CC71', status: 'available', currentTableId: null, isAvailable: true },
-  { id: 'CC72', displayName: 'CC72', status: 'available', currentTableId: null, isAvailable: true },
+  {
+    id: 'CC71',
+    displayName: 'CC71',
+    status: 'available',
+    currentTableId: null,
+    isAvailable: true,
+    ...EMPTY,
+    availability: nights('CC71', ['wed', 'thu', 'fri']),
+  },
+  {
+    id: 'CC72',
+    displayName: 'CC72',
+    status: 'available',
+    currentTableId: null,
+    isAvailable: true,
+    ...EMPTY,
+    availability: nights('CC72', ['fri', 'sat', 'sun']),
+  },
   {
     id: 'CC73',
     displayName: 'CC73',
     status: 'assigned',
     currentTableId: 'HN-11',
     isAvailable: false,
+    availability: nights('CC73', ['mon', 'tue', 'wed', 'thu', 'fri', 'sat']),
+    evaluations: [
+      {
+        id: 'eval-cc73-1',
+        at: at(11, 1, 19, 30),
+        author: 'Camille Roy',
+        score: 5,
+        note: 'Très à l’aise au cash. Les joueurs restent calmes.',
+      },
+    ],
+    comments: [],
   },
 ]
 
 export function createInitialSnapshot(): RoomSnapshot {
   const clock = zonedTimeToUtc(2026, 11, 17, 19, 44, 0).toISOString()
   const segmentStart = zonedTimeToUtc(2026, 11, 17, 17, 0, 0).toISOString()
-  const dealers = DEALER_SEEDS.map((dealer) => ({ ...dealer }))
+  const dealers = DEALER_SEEDS.map((dealer) => ({
+    ...dealer,
+    availability: dealer.availability.map((slot) => ({ ...slot })),
+    evaluations: dealer.evaluations.map((item) => ({ ...item })),
+    comments: dealer.comments.map((item) => ({ ...item })),
+  }))
   return {
     version: 1,
     clock,
     settings: {
-      roomOpen: true,
       rotationMode: 'auto',
       rotationIntervalMinutes: 30,
+      noteAuthor: 'Superviseur',
     },
     tables: TABLE_SEEDS.map((table) => ({ ...table })),
     dealers,

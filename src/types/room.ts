@@ -8,6 +8,30 @@ export type RotationMode = 'auto' | 'manual'
 export type TimelineView = 'rotation' | 'breaks'
 export type ActivityKind = 'table' | 'break' | 'available' | 'off_shift'
 export type TableRow = 'top' | 'bottom'
+export type Weekday = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
+
+export interface AvailabilitySlot {
+  id: string
+  day: Weekday
+  start: string
+  end: string
+}
+
+export interface DealerEvaluation {
+  id: string
+  at: string
+  author: string
+  score: number
+  note: string
+}
+
+export interface DealerComment {
+  id: string
+  at: string
+  author: string
+  text: string
+  dealerAware: boolean
+}
 
 export interface PokerTable {
   id: string
@@ -25,6 +49,9 @@ export interface Dealer {
   status: DealerStatus
   currentTableId: string | null
   isAvailable: boolean
+  availability: AvailabilitySlot[]
+  evaluations: DealerEvaluation[]
+  comments: DealerComment[]
 }
 
 export interface ActivitySegment {
@@ -37,9 +64,9 @@ export interface ActivitySegment {
 }
 
 export interface RoomSettings {
-  roomOpen: boolean
   rotationMode: RotationMode
   rotationIntervalMinutes: RotationInterval
+  noteAuthor: string
 }
 
 export interface RoomSnapshot {

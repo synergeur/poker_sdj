@@ -85,6 +85,10 @@ export function formatTime(iso: string): string {
   return `${String(parts.hour).padStart(2, '0')}:${String(parts.minute).padStart(2, '0')}`
 }
 
+export function formatNoteStamp(iso: string): string {
+  return `${formatShiftDate(iso)} · ${formatTime(iso)}`
+}
+
 export function formatShiftDate(iso: string): string {
   const date = new Date(iso)
   const parts = zonedParts(date)

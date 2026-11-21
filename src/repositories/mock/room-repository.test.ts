@@ -31,6 +31,33 @@ describe('mock room repository', () => {
     expect(snapshot.tables.some((table) => table.id === 'HN-02')).toBe(true)
   })
 
+  it('fills personnel fields missing from an older save', async () => {
+    const store = memoryStore()
+    const current = createInitialSnapshot()
+    const legacy = {
+      ...current,
+      settings: { roomOpen: false, rotationMode: 'manual', rotationIntervalMinutes: 15 },
+      dealers: current.dealers.map((dealer) => ({
+        id: dealer.id,
+        displayName: dealer.displayName,
+        status: dealer.status,
+        currentTableId: dealer.currentTableId,
+        isAvailable: dealer.isAvailable,
+      })),
+    }
+    store.setItem(ROOM_STORAGE_KEY, JSON.stringify(legacy))
+    const loaded = await createMockRoomRepository(store).load()
+    expect(loaded.settings).toEqual({
+      rotationMode: 'manual',
+      rotationIntervalMinutes: 15,
+      noteAuthor: 'Superviseur',
+    })
+    expect(loaded.dealers[0]?.availability).toEqual([])
+    expect(loaded.dealers[0]?.evaluations).toEqual([])
+    expect(loaded.dealers[0]?.comments).toEqual([])
+    expect(loaded.tables.find((table) => table.id === 'HN-02')?.status).toBe('open')
+  })
+
   it('reset restores the starting floor', async () => {
     const repository = createMockRoomRepository(memoryStore())
     await repository.save(closeTable(createInitialSnapshot(), 'HN-02').snapshot)

@@ -7,6 +7,7 @@ import type {
   RoomSnapshot,
   RotationInterval,
   RotationMode,
+  Weekday,
 } from '../../types/room.ts'
 import {
   addMinutes,
@@ -27,9 +28,13 @@ export function resetOperationIds(): void {
   sequence = 0
 }
 
-function nextSegmentId(): string {
+function nextId(prefix: string): string {
   sequence += 1
-  return `seg-${sequence}`
+  return `${prefix}-${sequence}`
+}
+
+function nextSegmentId(): string {
+  return nextId('seg')
 }
 
 function ok(snapshot: RoomSnapshot): OperationResult {
@@ -230,9 +235,133 @@ export function setDealerStatus(
   return ok(releaseDealer(snapshot, dealerId, status))
 }
 
-export function setRoomOpen(snapshot: RoomSnapshot, roomOpen: boolean): OperationResult {
-  if (snapshot.settings.roomOpen === roomOpen) return ok(snapshot)
-  return ok({ ...snapshot, settings: { ...snapshot.settings, roomOpen } })
+const CLOCK_TIME = /^([01]\d|2[0-3]):[0-5]\d$/
+const WEEKDAY_SET = new Set<Weekday>(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'])
+
+function clockMinutes(value: string): number {
+  const [hours, minutes] = value.split(':').map(Number)
+  return hours * 60 + minutes
+}
+
+function cleanName(value: string): string | null {
+  const name = value.trim()
+  if (!name || name.length > 80) return null
+  return name
+}
+
+export function setNoteAuthor(snapshot: RoomSnapshot, author: string): OperationResult {
+  const name = cleanName(author)
+  if (!name) return fail(snapshot, 'Indiquez qui signe les notes.')
+  if (snapshot.settings.noteAuthor === name) return ok(snapshot)
+  return ok({ ...snapshot, settings: { ...snapshot.settings, noteAuthor: name } })
+}
+
+export function addAvailability(
+  snapshot: RoomSnapshot,
+  dealerId: string,
+  day: Weekday,
+  start: string,
+  end: string,
+): OperationResult {
+  const dealer = dealerById(snapshot, dealerId)
+  if (!dealer) return fail(snapshot, 'Croupier introuvable.')
+  if (!WEEKDAY_SET.has(day) || !CLOCK_TIME.test(start) || !CLOCK_TIME.test(end)) {
+    return fail(snapshot, 'Indiquez un jour et des heures valides.')
+  }
+  if (clockMinutes(end) <= clockMinutes(start)) {
+    return fail(snapshot, 'La fin du créneau doit être après le début.')
+  }
+  const overlaps = dealer.availability.some(
+    (slot) =>
+      slot.day === day &&
+      clockMinutes(start) < clockMinutes(slot.end) &&
+      clockMinutes(end) > clockMinutes(slot.start),
+  )
+  if (overlaps) return fail(snapshot, 'Ce créneau chevauche une disponibilité déjà notée.')
+  const slot = { id: nextId('avail'), day, start, end }
+  return ok(updateDealer(snapshot, dealerId, { availability: [...dealer.availability, slot] }))
+}
+
+export function removeAvailability(
+  snapshot: RoomSnapshot,
+  dealerId: string,
+  slotId: string,
+): OperationResult {
+  const dealer = dealerById(snapshot, dealerId)
+  if (!dealer) return fail(snapshot, 'Croupier introuvable.')
+  if (!dealer.availability.some((slot) => slot.id === slotId)) {
+    return fail(snapshot, 'Créneau introuvable.')
+  }
+  return ok(
+    updateDealer(snapshot, dealerId, {
+      availability: dealer.availability.filter((slot) => slot.id !== slotId),
+    }),
+  )
+}
+
+export function addEvaluation(
+  snapshot: RoomSnapshot,
+  dealerId: string,
+  input: { author: string; score: number; note: string; at?: string },
+): OperationResult {
+  const dealer = dealerById(snapshot, dealerId)
+  if (!dealer) return fail(snapshot, 'Croupier introuvable.')
+  const author = cleanName(input.author)
+  const note = input.note.trim()
+  if (!author) return fail(snapshot, 'Indiquez qui signe l’évaluation.')
+  if (!Number.isInteger(input.score) || input.score < 1 || input.score > 5) {
+    return fail(snapshot, 'La note va de 1 à 5.')
+  }
+  if (!note || note.length > 500) return fail(snapshot, 'Ajoutez une observation.')
+  const evaluation = {
+    id: nextId('eval'),
+    at: input.at ?? new Date().toISOString(),
+    author,
+    score: input.score,
+    note,
+  }
+  return ok(updateDealer(snapshot, dealerId, { evaluations: [evaluation, ...dealer.evaluations] }))
+}
+
+export function addComment(
+  snapshot: RoomSnapshot,
+  dealerId: string,
+  input: { author: string; text: string; dealerAware: boolean; at?: string },
+): OperationResult {
+  const dealer = dealerById(snapshot, dealerId)
+  if (!dealer) return fail(snapshot, 'Croupier introuvable.')
+  const author = cleanName(input.author)
+  const text = input.text.trim()
+  if (!author) return fail(snapshot, 'Indiquez qui écrit le commentaire.')
+  if (!text || text.length > 1000) return fail(snapshot, 'Écrivez le commentaire.')
+  const comment = {
+    id: nextId('cmt'),
+    at: input.at ?? new Date().toISOString(),
+    author,
+    text,
+    dealerAware: input.dealerAware,
+  }
+  return ok(updateDealer(snapshot, dealerId, { comments: [comment, ...dealer.comments] }))
+}
+
+export function setCommentAwareness(
+  snapshot: RoomSnapshot,
+  dealerId: string,
+  commentId: string,
+  dealerAware: boolean,
+): OperationResult {
+  const dealer = dealerById(snapshot, dealerId)
+  if (!dealer) return fail(snapshot, 'Croupier introuvable.')
+  if (!dealer.comments.some((comment) => comment.id === commentId)) {
+    return fail(snapshot, 'Commentaire introuvable.')
+  }
+  return ok(
+    updateDealer(snapshot, dealerId, {
+      comments: dealer.comments.map((comment) =>
+        comment.id === commentId ? { ...comment, dealerAware } : comment,
+      ),
+    }),
+  )
 }
 
 export function setRotationMode(

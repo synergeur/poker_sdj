@@ -1,4 +1,8 @@
-import type { RoomSnapshot, RoomSummary } from '../../types/room.ts'
+import type { PokerTable, RoomSnapshot, RoomSummary } from '../../types/room.ts'
+
+export function isRoomOpen(tables: PokerTable[]): boolean {
+  return tables.some((table) => table.status === 'open')
+}
 
 export function summarize(snapshot: RoomSnapshot): RoomSummary {
   const { tables, dealers } = snapshot

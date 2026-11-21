@@ -1,4 +1,5 @@
 import { dataSourceLabel, env, isFirebaseConfigured } from '../config/env.ts'
+import { isRoomOpen } from '../features/room/summary.ts'
 import { SimClockBar } from '../components/dashboard/SimClockBar.tsx'
 import { PageHeader } from '../components/layout/PageHeader.tsx'
 import { useRoom } from '../features/room/RoomContext.tsx'
@@ -48,9 +49,10 @@ export function SettingsPage() {
           <p className="mt-2 text-sm text-violet-100/70">
             Mode {ROTATION_MODE_LABEL[snapshot.settings.rotationMode]}, intervalle{' '}
             {snapshot.settings.rotationIntervalMinutes} min. Ces valeurs ne déclenchent pas de
-            rotation. La salle est{' '}
-            {snapshot.settings.roomOpen ? 'marquée ouverte' : 'marquée fermée'} sans effet sur les
-            tables.
+            rotation. La salle est {isRoomOpen(snapshot.tables) ? 'ouverte' : 'fermée'} parce que{' '}
+            {isRoomOpen(snapshot.tables)
+              ? 'au moins une table est ouverte.'
+              : 'toutes les tables sont fermées.'}
           </p>
         </section>
         <section className="rounded-2xl border border-white/10 bg-[#141226] p-4">
