@@ -9,6 +9,12 @@ import {
   type ReactNode,
 } from 'react'
 import { createRoomRepository } from '../../repositories/index.ts'
+import {
+  addScheduleShift as addScheduleShiftOperation,
+  moveScheduleShift as moveScheduleShiftOperation,
+  removeScheduleShift as removeScheduleShiftOperation,
+  type ShiftDraft,
+} from '../schedule/shifts.ts'
 import type {
   RoomSnapshot,
   RotationInterval,
@@ -62,6 +68,9 @@ interface RoomContextValue {
     input: { author: string; text: string; dealerAware: boolean },
   ) => void
   setCommentAwareness: (dealerId: string, commentId: string, dealerAware: boolean) => void
+  addScheduleShift: (draft: ShiftDraft) => void
+  moveScheduleShift: (shiftId: string, draft: ShiftDraft) => void
+  removeScheduleShift: (shiftId: string) => void
   setRotationMode: (mode: RotationMode) => void
   setRotationInterval: (minutes: RotationInterval) => void
   advanceClock: (minutes: number) => void
@@ -179,6 +188,11 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         apply((current) => addCommentOperation(current, dealerId, input)),
       setCommentAwareness: (dealerId, commentId, dealerAware) =>
         apply((current) => setCommentAwarenessOperation(current, dealerId, commentId, dealerAware)),
+      addScheduleShift: (draft) => apply((current) => addScheduleShiftOperation(current, draft)),
+      moveScheduleShift: (shiftId, draft) =>
+        apply((current) => moveScheduleShiftOperation(current, shiftId, draft)),
+      removeScheduleShift: (shiftId) =>
+        apply((current) => removeScheduleShiftOperation(current, shiftId)),
       setRotationMode: (mode) => apply((current) => setRotationModeOperation(current, mode)),
       setRotationInterval: (minutes) =>
         apply((current) => setRotationIntervalOperation(current, minutes)),

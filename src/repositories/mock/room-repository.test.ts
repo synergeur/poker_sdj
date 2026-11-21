@@ -34,8 +34,9 @@ describe('mock room repository', () => {
   it('fills personnel fields missing from an older save', async () => {
     const store = memoryStore()
     const current = createInitialSnapshot()
+    const { shifts: _shifts, ...withoutShifts } = current
     const legacy = {
-      ...current,
+      ...withoutShifts,
       settings: { roomOpen: false, rotationMode: 'manual', rotationIntervalMinutes: 15 },
       dealers: current.dealers.map((dealer) => ({
         id: dealer.id,
@@ -55,6 +56,11 @@ describe('mock room repository', () => {
     expect(loaded.dealers[0]?.availability).toEqual([])
     expect(loaded.dealers[0]?.evaluations).toEqual([])
     expect(loaded.dealers[0]?.comments).toEqual([])
+    expect(loaded.shifts.map((shift) => shift.id)).toEqual([
+      'shift-cc63',
+      'shift-cc67',
+      'shift-cc70',
+    ])
     expect(loaded.tables.find((table) => table.id === 'HN-02')?.status).toBe('open')
   })
 

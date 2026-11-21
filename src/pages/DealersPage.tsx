@@ -2,17 +2,9 @@ import { useMemo, useState } from 'react'
 import { DealerFile } from '../components/dealers/DealerFile.tsx'
 import { PageHeader } from '../components/layout/PageHeader.tsx'
 import { useRoom } from '../features/room/RoomContext.tsx'
-import type { Dealer, DealerStatus } from '../types/room.ts'
+import type { Dealer } from '../types/room.ts'
 import { cx } from '../utils/cx.ts'
-import { DEALER_STATUS_LABEL, WEEKDAY_SHORT } from '../utils/labels.ts'
-
-const FILTERS: Array<{ id: 'all' | DealerStatus; label: string }> = [
-  { id: 'all', label: 'Tous' },
-  { id: 'assigned', label: 'Affectés' },
-  { id: 'on_break', label: 'En pause' },
-  { id: 'available', label: 'Disponibles' },
-  { id: 'off_shift', label: 'Hors quart' },
-]
+import { WEEKDAY_SHORT } from '../utils/labels.ts'
 
 function averageScore(dealer: Dealer): string | null {
   if (dealer.evaluations.length === 0) return null
@@ -23,16 +15,12 @@ function averageScore(dealer: Dealer): string | null {
 export function DealersPage() {
   const { snapshot } = useRoom()
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]['id']>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const dealers = useMemo(() => {
     if (!snapshot) return []
-    return snapshot.dealers.filter((dealer) => {
-      const matchesFilter = filter === 'all' || dealer.status === filter
-      const matchesQuery = dealer.displayName.toLowerCase().includes(query.trim().toLowerCase())
-      return matchesFilter && matchesQuery
-    })
-  }, [filter, query, snapshot])
+    const needle = query.trim().toLowerCase()
+    return snapshot.dealers.filter((dealer) => dealer.displayName.toLowerCase().includes(needle))
+  }, [query, snapshot])
 
   if (!snapshot) return null
   const selected = snapshot.dealers.find((dealer) => dealer.id === selectedId) ?? null
@@ -61,23 +49,10 @@ export function DealersPage() {
               className="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#141226] px-3 py-2 text-sm"
               aria-label="Rechercher un croupier"
             />
-            {FILTERS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className={cx(
-                  'rounded-full px-3 py-1.5 text-sm',
-                  filter === item.id ? 'bg-violet-600 text-white' : 'bg-white/5 text-violet-100/70',
-                )}
-                onClick={() => setFilter(item.id)}
-              >
-                {item.label}
-              </button>
-            ))}
           </div>
           {dealers.length === 0 ? (
             <p className="rounded-2xl border border-white/10 bg-[#141226] p-6 text-sm text-violet-100/70">
-              Aucun croupier ne correspond à ce filtre.
+              Aucun croupier ne correspond.
             </p>
           ) : (
             <div
@@ -101,17 +76,7 @@ export function DealersPage() {
                         : 'border-white/10 bg-[#141226] hover:border-violet-300/40',
                     )}
                   >
-                    <span className="flex items-center justify-between gap-2">
-                      <span className="font-display text-lg font-semibold">
-                        {dealer.displayName}
-                      </span>
-                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px]">
-                        {DEALER_STATUS_LABEL[dealer.status]}
-                      </span>
-                    </span>
-                    <span className="mt-1 block text-sm text-violet-100/70">
-                      {dealer.currentTableId ?? 'Sans table'}
-                    </span>
+                    <span className="font-display text-lg font-semibold">{dealer.displayName}</span>
                     <span className="mt-2 block text-xs text-violet-100/60">
                       {dealer.availability.length === 0
                         ? 'Horaires non renseignés'

@@ -34,9 +34,13 @@ export function normalizeSnapshot(snapshot: RoomSnapshot): RoomSnapshot {
       ? settings.noteAuthor.trim()
       : 'Superviseur'
   const nextSettings: RoomSettings = { rotationMode, rotationIntervalMinutes, noteAuthor }
+  const rawShifts = asRecord(snapshot).shifts
   return {
     ...snapshot,
     settings: nextSettings,
+    shifts: Array.isArray(rawShifts)
+      ? snapshot.shifts
+      : createInitialSnapshot().shifts.map((shift) => ({ ...shift })),
     dealers: snapshot.dealers.map((dealer) => {
       const raw = asRecord(dealer)
       return {

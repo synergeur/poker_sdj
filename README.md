@@ -17,6 +17,7 @@ This slice is for trying the layout and the manual floor operations. It does not
 - Chip run stays disabled until its behavior is defined.
 - Reset the fictional shift: Monday 17 November 2026, 19:44, Toronto time.
 - Open a dealer card for working hours, evaluations, and comments. A comment stores its date, its author, and whether the dealer has been told.
+- Draw a schedule from 10:00 to 04:00. Left-drag adds cash, right-drag adds tournament, and a block can be dragged onto another dealer or time.
 - The room is open while any table is open, and closed when every table is closed.
 
 The floor, the timeline, the summary cards, and the “right now” list all read the same room state. Hatched bars after the current time mean “this assignment simply continues”. They are not a calculated rotation.

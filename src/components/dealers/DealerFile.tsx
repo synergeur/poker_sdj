@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useRoom } from '../../features/room/RoomContext.tsx'
 import type { Weekday } from '../../types/room.ts'
-import { btnGhost, btnPrimary, btnWarn, cx } from '../../utils/cx.ts'
-import { DEALER_STATUS_LABEL, WEEKDAY_LABEL, WEEKDAYS } from '../../utils/labels.ts'
+import { btnPrimary, cx } from '../../utils/cx.ts'
+import { WEEKDAY_LABEL, WEEKDAYS } from '../../utils/labels.ts'
 import { formatNoteStamp } from '../../utils/time.ts'
 
 export function DealerFile({ dealerId, onBack }: { dealerId: string; onBack: () => void }) {
@@ -37,55 +37,6 @@ export function DealerFile({ dealerId, onBack }: { dealerId: string; onBack: () 
             Retour à la liste
           </button>
           <h2 className="font-display text-2xl font-semibold">{dealer.displayName}</h2>
-          <p className="text-sm text-violet-100/70">
-            {DEALER_STATUS_LABEL[dealer.status]}
-            {dealer.currentTableId ? ` · ${dealer.currentTableId}` : ' · sans table'}
-          </p>
-        </div>
-        <div className="flex shrink-0 flex-wrap justify-end gap-1">
-          {dealer.status === 'on_break' ? (
-            <button
-              type="button"
-              className={btnPrimary}
-              onClick={() => room.setDealerStatus(dealer.id, 'available')}
-            >
-              Fin de pause
-            </button>
-          ) : (
-            <button
-              type="button"
-              className={btnWarn}
-              onClick={() => room.setDealerStatus(dealer.id, 'on_break')}
-            >
-              Pause
-            </button>
-          )}
-          {dealer.currentTableId ? (
-            <button
-              type="button"
-              className={btnGhost}
-              onClick={() => room.unassignDealer(dealer.currentTableId!)}
-            >
-              Retirer
-            </button>
-          ) : null}
-          {dealer.status === 'off_shift' ? (
-            <button
-              type="button"
-              className={btnPrimary}
-              onClick={() => room.setDealerStatus(dealer.id, 'available')}
-            >
-              En salle
-            </button>
-          ) : (
-            <button
-              type="button"
-              className={btnGhost}
-              onClick={() => room.setDealerStatus(dealer.id, 'off_shift')}
-            >
-              Hors quart
-            </button>
-          )}
         </div>
       </div>
 

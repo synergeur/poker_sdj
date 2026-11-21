@@ -1,4 +1,13 @@
-import { ChartColumn, LayoutGrid, Radio, RefreshCcw, Settings, Spade, Users } from 'lucide-react'
+import {
+  CalendarRange,
+  ChartColumn,
+  LayoutGrid,
+  Radio,
+  RefreshCcw,
+  Settings,
+  Spade,
+  Users,
+} from 'lucide-react'
 import { NavLink, Outlet } from 'react-router'
 import { useRoom } from '../../features/room/RoomContext.tsx'
 import { cx } from '../../utils/cx.ts'
@@ -8,6 +17,7 @@ const NAV = [
   { to: '/', label: 'Salle en direct', icon: Radio, end: true },
   { to: '/rotations', label: 'Rotations & pauses', icon: RefreshCcw, end: false },
   { to: '/tables', label: 'Tables', icon: LayoutGrid, end: false },
+  { to: '/schedules', label: 'Horaires', icon: CalendarRange, end: false },
   { to: '/reports', label: 'Rapports', icon: ChartColumn, end: false },
   { to: '/settings', label: 'Paramètres', icon: Settings, end: false },
 ]

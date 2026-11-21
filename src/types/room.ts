@@ -54,6 +54,16 @@ export interface Dealer {
   comments: DealerComment[]
 }
 
+export type ScheduleKind = 'cash' | 'tournament'
+
+export interface ScheduleShift {
+  id: string
+  dealerId: string
+  kind: ScheduleKind
+  startMinutes: number
+  endMinutes: number
+}
+
 export interface ActivitySegment {
   id: string
   dealerId: string
@@ -76,6 +86,7 @@ export interface RoomSnapshot {
   tables: PokerTable[]
   dealers: Dealer[]
   segments: ActivitySegment[]
+  shifts: ScheduleShift[]
 }
 
 export interface RoomSummary {

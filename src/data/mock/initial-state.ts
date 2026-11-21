@@ -316,5 +316,28 @@ export function createInitialSnapshot(): RoomSnapshot {
       start: segmentStart,
       end: null,
     })),
+    shifts: [
+      {
+        id: 'shift-cc63',
+        dealerId: 'CC63',
+        kind: 'tournament',
+        startMinutes: 7 * 60,
+        endMinutes: 13 * 60,
+      },
+      {
+        id: 'shift-cc67',
+        dealerId: 'CC67',
+        kind: 'cash',
+        startMinutes: 8 * 60,
+        endMinutes: 16 * 60,
+      },
+      {
+        id: 'shift-cc70',
+        dealerId: 'CC70',
+        kind: 'tournament',
+        startMinutes: 2 * 60,
+        endMinutes: 10 * 60,
+      },
+    ],
   }
 }
