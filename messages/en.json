@@ -1,0 +1,95 @@
+{
+  "brand": {
+    "name": "Casino Room"
+  },
+  "settings": {
+    "open": "Settings",
+    "title": "Settings",
+    "close": "Close",
+    "language": "Language",
+    "shortcuts": "Shortcuts",
+    "sidebarShortcut": "Open or close the sidebar",
+    "sidebarKeys": "Ctrl+B",
+    "languageShortcut": "Switch language",
+    "languageKeys": "Ctrl+L"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "fr": "French"
+  },
+  "signIn": {
+    "title": "Sign in",
+    "subtitle": "Use the account ID and password created when the account was issued. There is no public registration.",
+    "accountId": "Account ID",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "errors": {
+      "invalid": "Enter the account ID and password that were issued for this account.",
+      "account_invalid": "The account ID uses letters, digits, and underscores, and starts with a letter.",
+      "credentials": "Those credentials do not match an issued account.",
+      "unavailable": "Sign-in is not available until the server is configured."
+    }
+  },
+  "admin": {
+    "nav": "Organizations",
+    "title": "Organizations",
+    "subtitle": "Each organization is one establishment. Create it here, with the account its administrator will use to sign in.",
+    "signOut": "Sign out",
+    "loading": "Loading the console…",
+    "deniedTitle": "No access to this console",
+    "deniedBody": "This console is reserved for the platform host. Organization spaces are not part of this version.",
+    "unconfigured": "The database is not configured yet. Add the Supabase values from .env.example, then sign in with the host account ID.",
+    "empty": "No organizations yet.",
+    "created": "Organization created. The administrator signs in with the account ID and password you just set.",
+    "columns": {
+      "name": "Name",
+      "slug": "Subdomain",
+      "status": "Status",
+      "contact": "Contact",
+      "admin": "Account ID",
+      "created": "Created"
+    },
+    "status": {
+      "active": "Active",
+      "suspended": "Suspended"
+    },
+    "suspend": "Suspend",
+    "reactivate": "Reactivate",
+    "working": "Saving…",
+    "createTitle": "New organization",
+    "fields": {
+      "name": "Organization name",
+      "slug": "Subdomain",
+      "status": "Status",
+      "contactEmail": "Contact email",
+      "address": "Address",
+      "adminFirstName": "Administrator first name",
+      "adminLastName": "Administrator last name",
+      "adminAccountId": "Administrator account ID",
+      "adminPassword": "Administrator password",
+      "adminPasswordConfirm": "Confirm password"
+    },
+    "hints": {
+      "slug": "Later this becomes slug.domain.com. Sign-in stays on the main domain.",
+      "account": "The administrator connects with this account ID and password. The account is created now. There is no self-service registration."
+    },
+    "submit": "Create organization",
+    "submitting": "Creating…",
+    "errors": {
+      "invalid": "Check the form and try again.",
+      "slug_invalid": "Use a short subdomain: lowercase letters, digits, and single hyphens.",
+      "slug_reserved": "That subdomain is reserved.",
+      "slug_taken": "That subdomain is already used.",
+      "account_invalid": "The account ID must start with a letter and use only letters, digits, and underscores.",
+      "account_taken": "That account ID is already used.",
+      "password_mismatch": "The two passwords do not match.",
+      "password_short": "The password needs at least 8 characters.",
+      "forbidden": "Only the platform host can do that.",
+      "unavailable": "The database is not configured.",
+      "failed": "The organization was not created.",
+      "account_cleanup_failed": "The organization was not created, and the new account ID could not be released. Choose another account ID."
+    }
+  }
+}

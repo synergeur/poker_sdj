@@ -1,0 +1,13 @@
+-- First platform host.
+--
+-- 1. Disable public sign-ups in Authentication settings.
+-- 2. Add a user:
+--      email:    host@id.casinoroom.app
+--      password: the password typed on the sign-in page
+--      auto-confirm: on
+--    The profile trigger stores the account ID "host".
+--    Choose another local-part if the account ID should not be "host".
+-- 3. Copy the user UUID and insert it below.
+
+-- insert into public.platform_admins (user_id)
+-- values ('00000000-0000-0000-0000-000000000000');

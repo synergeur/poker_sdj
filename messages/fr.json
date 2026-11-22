@@ -1,0 +1,95 @@
+{
+  "brand": {
+    "name": "Casino Room"
+  },
+  "settings": {
+    "open": "Paramètres",
+    "title": "Paramètres",
+    "close": "Fermer",
+    "language": "Langue",
+    "shortcuts": "Raccourcis",
+    "sidebarShortcut": "Ouvrir ou fermer la barre latérale",
+    "sidebarKeys": "Ctrl+B",
+    "languageShortcut": "Changer de langue",
+    "languageKeys": "Ctrl+L"
+  },
+  "language": {
+    "label": "Langue",
+    "en": "Anglais",
+    "fr": "Français"
+  },
+  "signIn": {
+    "title": "Connexion",
+    "subtitle": "Utilisez l'identifiant et le mot de passe créés au moment de l'ouverture du compte. Il n'y a pas d'inscription publique.",
+    "accountId": "Identifiant",
+    "password": "Mot de passe",
+    "submit": "Se connecter",
+    "submitting": "Connexion…",
+    "errors": {
+      "invalid": "Entrez l'identifiant et le mot de passe qui ont été attribués à ce compte.",
+      "account_invalid": "L'identifiant commence par une lettre et n'utilise que des lettres, des chiffres et des traits de soulignement.",
+      "credentials": "Ces informations ne correspondent à aucun compte attribué.",
+      "unavailable": "La connexion n'est pas disponible tant que le serveur n'est pas configuré."
+    }
+  },
+  "admin": {
+    "nav": "Organisations",
+    "title": "Organisations",
+    "subtitle": "Une organisation représente un établissement. Créez-la ici, avec le compte que son administrateur utilisera pour se connecter.",
+    "signOut": "Se déconnecter",
+    "loading": "Chargement de la console…",
+    "deniedTitle": "Aucun accès à cette console",
+    "deniedBody": "Cette console est réservée à l'hôte de la plateforme. L'espace des organisations ne fait pas partie de cette version.",
+    "unconfigured": "La base de données n'est pas encore configurée. Ajoutez les valeurs Supabase du fichier .env.example, puis connectez-vous avec l'identifiant de l'hôte.",
+    "empty": "Aucune organisation pour le moment.",
+    "created": "Organisation créée. L'administrateur se connecte avec l'identifiant et le mot de passe que vous venez de définir.",
+    "columns": {
+      "name": "Nom",
+      "slug": "Sous-domaine",
+      "status": "Statut",
+      "contact": "Contact",
+      "admin": "Identifiant",
+      "created": "Créée le"
+    },
+    "status": {
+      "active": "Active",
+      "suspended": "Suspendue"
+    },
+    "suspend": "Suspendre",
+    "reactivate": "Réactiver",
+    "working": "Enregistrement…",
+    "createTitle": "Nouvelle organisation",
+    "fields": {
+      "name": "Nom de l'organisation",
+      "slug": "Sous-domaine",
+      "status": "Statut",
+      "contactEmail": "Courriel de contact",
+      "address": "Adresse",
+      "adminFirstName": "Prénom de l'administrateur",
+      "adminLastName": "Nom de l'administrateur",
+      "adminAccountId": "Identifiant de l'administrateur",
+      "adminPassword": "Mot de passe de l'administrateur",
+      "adminPasswordConfirm": "Confirmer le mot de passe"
+    },
+    "hints": {
+      "slug": "Ce sous-domaine deviendra plus tard slug.domain.com. La connexion reste sur le domaine principal.",
+      "account": "L'administrateur se connecte avec cet identifiant et ce mot de passe. Le compte est créé maintenant. Il n'y a pas d'inscription libre."
+    },
+    "submit": "Créer l'organisation",
+    "submitting": "Création…",
+    "errors": {
+      "invalid": "Vérifiez le formulaire et réessayez.",
+      "slug_invalid": "Utilisez un sous-domaine court : lettres minuscules, chiffres et traits d'union simples.",
+      "slug_reserved": "Ce sous-domaine est réservé.",
+      "slug_taken": "Ce sous-domaine est déjà utilisé.",
+      "account_invalid": "L'identifiant doit commencer par une lettre et n'utiliser que des lettres, des chiffres et des traits de soulignement.",
+      "account_taken": "Cet identifiant est déjà utilisé.",
+      "password_mismatch": "Les deux mots de passe ne correspondent pas.",
+      "password_short": "Le mot de passe doit contenir au moins 8 caractères.",
+      "forbidden": "Seul l'hôte de la plateforme peut faire cela.",
+      "unavailable": "La base de données n'est pas configurée.",
+      "failed": "L'organisation n'a pas été créée.",
+      "account_cleanup_failed": "L'organisation n'a pas été créée, et le nouvel identifiant n'a pas pu être libéré. Choisissez un autre identifiant."
+    }
+  }
+}
