@@ -1,11 +1,14 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { organizationHandoffUrl } from "@/lib/auth/handoff";
 import { accountEmail } from "@/lib/auth/account-email";
 import { createClient } from "@/lib/supabase/server";
 import { publicSupabaseEnv } from "@/lib/supabase/env";
 import { parseSignIn, type FormError } from "@/lib/validation/organization";
+import { lookupSessionHome } from "@/server/authorization/session-home";
 
 export type SignInState = { error: FormError | null };
 
@@ -33,14 +36,15 @@ export async function signInAction(_state: SignInState, formData: FormData): Pro
     return { error: "credentials" };
   }
 
-  redirect("/admin");
-}
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const home = user ? await lookupSessionHome(supabase, user.id) : { kind: "none" as const };
 
-export async function signOutAction() {
-  if (publicSupabaseEnv()) {
-    const supabase = await createClient();
-    await supabase.auth.signOut();
+  if (home.kind === "organization") {
+    const store = await cookies();
+    redirect(organizationHandoffUrl(home.slug, store.getAll()));
   }
 
-  redirect("/sign-in");
+  redirect("/admin");
 }

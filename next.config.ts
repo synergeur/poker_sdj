@@ -6,6 +6,7 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  allowedDevOrigins: ["*.localhost", "localhost"],
   turbopack: {
     rules: {
       "*.css": {

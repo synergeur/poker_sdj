@@ -7,7 +7,7 @@ export const instant = false;
 export default function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string; statusError?: string }>;
+  searchParams: Promise<{ created?: string; updated?: string; statusError?: string }>;
 }) {
   return (
     <Suspense

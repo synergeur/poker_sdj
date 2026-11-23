@@ -2,22 +2,23 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { appUrl, publicSupabaseEnv, rootDomain } from "@/lib/supabase/env";
-import { buildApexSignInUrl, parseRequestHost } from "@/lib/tenant/host";
+import { sharedCookieOptions } from "@/lib/supabase/cookies";
+import { crossHostHomeUrl } from "@/lib/auth/handoff";
+import { decideAccess, type SessionHome } from "@/lib/tenant/access";
+import { ORGANIZATION_HOST_HEADER, parseRequestHost } from "@/lib/tenant/host";
+import { lookupSessionHome } from "@/server/authorization/session-home";
 
 export async function proxy(request: NextRequest) {
-  const parsed = parseRequestHost(request.headers.get("host") ?? "", rootDomain());
-
-  if (parsed.kind === "tenant") {
-    return redirectTenantToApex(request);
-  }
-
+  const domain = rootDomain();
+  const parsed = parseRequestHost(request.headers.get("host") ?? "", domain);
+  const slug = parsed.kind === "tenant" ? parsed.slug : null;
   const env = publicSupabaseEnv();
+
   if (!env) {
-    return redirectSignedOut(request, NextResponse.next({ request }));
+    return finish(request, forward(request, slug), { kind: "anonymous" }, domain);
   }
 
-  let supabaseResponse = NextResponse.next({ request });
-
+  let sessionResponse = forward(request, slug);
   const supabase = createServerClient(env.url, env.key, {
     cookies: {
       getAll() {
@@ -27,70 +28,84 @@ export async function proxy(request: NextRequest) {
         cookiesToSet.forEach(({ name, value }) => {
           request.cookies.set(name, value);
         });
-        supabaseResponse = NextResponse.next({ request });
+        sessionResponse = forward(request, slug);
         cookiesToSet.forEach(({ name, value, options }) => {
-          supabaseResponse.cookies.set(name, value, options);
+          sessionResponse.cookies.set(name, value, sharedCookieOptions(options));
         });
         Object.entries(headers).forEach(([key, value]) => {
-          supabaseResponse.headers.set(key, value);
+          sessionResponse.headers.set(key, value);
         });
       },
     },
   });
 
-  let signedIn = false;
+  let home: SessionHome = { kind: "anonymous" };
   try {
     const { data } = await supabase.auth.getClaims();
-    signedIn = typeof data?.claims?.sub === "string" && data.claims.sub.length > 0;
+    const userId = data?.claims?.sub;
+    if (typeof userId === "string" && userId.length > 0) {
+      home = await lookupSessionHome(supabase, userId);
+    }
   } catch {
-    signedIn = false;
+    home = { kind: "anonymous" };
   }
 
-  return redirectSignedOut(request, supabaseResponse, signedIn);
+  return finish(request, sessionResponse, home, domain);
 }
 
-function redirectTenantToApex(request: NextRequest) {
-  const publicUrl = `${request.nextUrl.protocol}//${request.headers.get("host") ?? request.nextUrl.host}${request.nextUrl.pathname}`;
-  const destination = buildApexSignInUrl(publicUrl, rootDomain(), appUrl());
+function finish(request: NextRequest, sessionResponse: NextResponse, home: SessionHome, domain: string) {
+  const parsed = parseRequestHost(request.headers.get("host") ?? "", domain);
+  const decision = decideAccess({
+    host: parsed,
+    pathname: request.nextUrl.pathname,
+    home,
+    rootDomain: domain,
+    appUrl: appUrl() || request.nextUrl.origin,
+  });
 
-  // The dev server rewrites the internal URL to the apex before Proxy runs, then
-  // turns a same-origin Location into a relative path. A relative /sign-in would
-  // keep the browser on the organization host.
-  if (destination.origin === request.nextUrl.origin) {
+  if (decision.type === "allow") return sessionResponse;
+  const href = crossHostHomeUrl(request.headers.get("host") ?? "", decision.href, request.cookies.getAll());
+  return redirectPreserving(request, href, sessionResponse);
+}
+
+function forward(request: NextRequest, slug: string | null) {
+  const headers = new Headers(request.headers);
+  if (slug) headers.set(ORGANIZATION_HOST_HEADER, slug);
+  else headers.delete(ORGANIZATION_HOST_HEADER);
+
+  const cookie = request.cookies
+    .getAll()
+    .map(({ name, value }) => `${name}=${value}`)
+    .join("; ");
+  if (cookie) headers.set("cookie", cookie);
+  else headers.delete("cookie");
+
+  return NextResponse.next({ request: { headers } });
+}
+
+function redirectPreserving(request: NextRequest, href: string, sessionResponse: NextResponse) {
+  const destination = new URL(href);
+  const publicHost = parseRequestHost(request.headers.get("host") ?? "", rootDomain());
+  const devRewroteTenantOntoApex =
+    publicHost.kind === "tenant" && destination.origin === request.nextUrl.origin;
+
+  if (devRewroteTenantOntoApex) {
     const target = destination.href;
-    const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${target}"><script>location.replace(${JSON.stringify(target)})</script></head><body></body></html>`;
-    return new NextResponse(html, {
-      status: 200,
-      headers: {
-        "content-type": "text/html; charset=utf-8",
-        "cache-control": "no-store",
-      },
-    });
+    const safe = target.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+    const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${safe}"><script>location.replace(${JSON.stringify(target)})</script></head><body></body></html>`;
+    return carrySession(
+      new NextResponse(html, {
+        status: 200,
+        headers: {
+          "content-type": "text/html; charset=utf-8",
+          "cache-control": "no-store",
+        },
+      }),
+      sessionResponse,
+    );
   }
 
-  return NextResponse.redirect(destination);
-}
-
-function redirectSignedOut(request: NextRequest, sessionResponse: NextResponse, signedIn = false) {
-  const path = request.nextUrl.pathname;
-  const needsSignIn = path === "/" || path.startsWith("/admin");
-  const leavingSignIn = signedIn && (path === "/sign-in" || path === "/");
-
-  if (!signedIn && needsSignIn) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/sign-in";
-    url.search = "";
-    return carrySession(NextResponse.redirect(url), sessionResponse);
-  }
-
-  if (leavingSignIn) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/admin";
-    url.search = "";
-    return carrySession(NextResponse.redirect(url), sessionResponse);
-  }
-
-  return sessionResponse;
+  return carrySession(NextResponse.redirect(destination), sessionResponse);
 }
 
 function carrySession(response: NextResponse, sessionResponse: NextResponse) {

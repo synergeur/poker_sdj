@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { parseCreateOrganization, parseSignIn } from "./organization.ts";
+import { parseCreateOrganization, parseSignIn, parseUpdateOrganization } from "./organization.ts";
 
 const organization = {
   name: "Casino Québec",
@@ -46,5 +46,52 @@ test("organization creation rejects a reserved subdomain and a mismatched passwo
   assert.equal(mismatch.ok, false);
   if (!mismatch.ok) {
     assert.equal(mismatch.error, "password_mismatch");
+  }
+});
+
+const update = {
+  organizationId: "26855b6c-abdc-420a-b545-407b703c5443",
+  adminUserId: "11111111-1111-4111-8111-111111111111",
+  name: "Salle principale",
+  slug: "salle",
+  contactEmail: "",
+  address: "12 rue des Jeux",
+  adminFirstName: "Alex",
+  adminLastName: "Martin",
+  adminAccountId: "organisateur",
+  adminPassword: "",
+  adminPasswordConfirm: "",
+};
+
+test("an organizer edit can keep the current password", () => {
+  const parsed = parseUpdateOrganization(update);
+  assert.equal(parsed.ok, true);
+  if (parsed.ok) {
+    assert.equal(parsed.data.adminPassword, "");
+    assert.equal(parsed.data.adminAccountId, "organisateur");
+  }
+});
+
+test("an organizer edit rejects a short replacement password", () => {
+  const parsed = parseUpdateOrganization({
+    ...update,
+    adminPassword: "short",
+    adminPasswordConfirm: "short",
+  });
+  assert.equal(parsed.ok, false);
+  if (!parsed.ok) {
+    assert.equal(parsed.error, "password_short");
+  }
+});
+
+test("an organizer edit rejects a password that was typed only once", () => {
+  const parsed = parseUpdateOrganization({
+    ...update,
+    adminPassword: "tables-open",
+    adminPasswordConfirm: "",
+  });
+  assert.equal(parsed.ok, false);
+  if (!parsed.ok) {
+    assert.equal(parsed.error, "password_mismatch");
   }
 });

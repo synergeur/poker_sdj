@@ -2,8 +2,17 @@
 
 import { redirect } from "next/navigation";
 
-import { isFormError, parseCreateOrganization, type FormError } from "@/lib/validation/organization";
-import { createOrganization, setOrganizationStatus } from "@/server/services/organizations";
+import {
+  isFormError,
+  parseCreateOrganization,
+  parseUpdateOrganization,
+  type FormError,
+} from "@/lib/validation/organization";
+import {
+  createOrganization,
+  setOrganizationStatus,
+  updateOrganizationAdmin,
+} from "@/server/services/organizations";
 
 export type CreateOrganizationState = { error: FormError | null };
 
@@ -50,4 +59,36 @@ export async function setOrganizationStatusAction(formData: FormData) {
   }
 
   redirect("/admin");
+}
+
+export type UpdateOrganizationState = { error: FormError | null };
+
+export async function updateOrganizationAction(
+  _state: UpdateOrganizationState,
+  formData: FormData,
+): Promise<UpdateOrganizationState> {
+  const parsed = parseUpdateOrganization({
+    organizationId: formData.get("organizationId"),
+    adminUserId: formData.get("adminUserId"),
+    name: formData.get("name"),
+    slug: formData.get("slug"),
+    contactEmail: formData.get("contactEmail"),
+    address: formData.get("address"),
+    adminFirstName: formData.get("adminFirstName"),
+    adminLastName: formData.get("adminLastName"),
+    adminAccountId: formData.get("adminAccountId"),
+    adminPassword: formData.get("adminPassword"),
+    adminPasswordConfirm: formData.get("adminPasswordConfirm"),
+  });
+
+  if (!parsed.ok) {
+    return { error: parsed.error };
+  }
+
+  const result = await updateOrganizationAdmin(parsed.data);
+  if (!result.ok) {
+    return { error: result.error };
+  }
+
+  redirect("/admin?updated=1");
 }

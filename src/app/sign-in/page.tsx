@@ -1,12 +1,15 @@
 import { getLocale, getTranslations } from "next-intl/server";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { SignInForm } from "@/components/auth/sign-in-form";
 import { BrandMark } from "@/components/brand-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
+
+import { organizationHandoffUrl } from "@/lib/auth/handoff";
 import { isLocale } from "@/i18n/locale";
-import { getAccess } from "@/server/authorization/platform-admin";
+import { currentSessionHome } from "@/server/authorization/session-home";
 
 export const instant = false;
 
@@ -25,9 +28,12 @@ export default function SignInPage() {
 }
 
 async function SignInScreen() {
-  const access = await getAccess();
-  if (access.kind === "host" || access.kind === "forbidden") {
+  const home = await currentSessionHome();
+  if (home.kind === "host") {
     redirect("/admin");
+  }
+  if (home.kind === "organization") {
+    redirect(organizationHandoffUrl(home.slug, (await cookies()).getAll()));
   }
 
   const localeValue = await getLocale();

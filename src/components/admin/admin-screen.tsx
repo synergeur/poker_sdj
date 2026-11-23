@@ -1,5 +1,8 @@
 import { getLocale, getTranslations } from "next-intl/server";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+
+import { organizationHandoffUrl } from "@/lib/auth/handoff";
 
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CreateOrganizationForm } from "@/components/admin/create-organization-form";
@@ -7,16 +10,23 @@ import { OrganizationList } from "@/components/admin/organization-list";
 import { isLocale } from "@/i18n/locale";
 import { isFormError, type FormError } from "@/lib/validation/organization";
 import { getAccess } from "@/server/authorization/platform-admin";
+import { currentSessionHome } from "@/server/authorization/session-home";
 import { listOrganizations } from "@/server/services/organizations";
 
 export async function AdminScreen({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string; statusError?: string }>;
+  searchParams: Promise<{ created?: string; updated?: string; statusError?: string }>;
 }) {
   const access = await getAccess();
   if (access.kind === "anonymous") {
     redirect("/sign-in");
+  }
+  if (access.kind === "forbidden") {
+    const home = await currentSessionHome();
+    if (home.kind === "organization") {
+      redirect(organizationHandoffUrl(home.slug, (await cookies()).getAll()));
+    }
   }
 
   const localeValue = await getLocale();
@@ -71,6 +81,14 @@ export async function AdminScreen({
           className="rounded-xl border border-emerald-300/30 bg-emerald-400/15 px-3 py-2 text-sm text-emerald-50"
         >
           {t("admin.created")}
+        </p>
+      ) : null}
+      {params.updated === "1" ? (
+        <p
+          role="status"
+          className="rounded-xl border border-emerald-300/30 bg-emerald-400/15 px-3 py-2 text-sm text-emerald-50"
+        >
+          {t("admin.updated")}
         </p>
       ) : null}
       {statusError && statusError !== "credentials" ? (
@@ -141,6 +159,40 @@ export async function AdminScreen({
             reactivate: t("admin.reactivate"),
             working: t("admin.working"),
             empty: t("admin.empty"),
+            edit: t("admin.edit"),
+            editor: {
+              title: t("admin.editTitle"),
+              close: t("admin.editClose"),
+              establishment: t("admin.establishment"),
+              administrator: t("admin.administrator"),
+              fields: {
+                name: t("admin.fields.name"),
+                slug: t("admin.fields.slug"),
+                contactEmail: t("admin.fields.contactEmail"),
+                address: t("admin.fields.address"),
+                adminFirstName: t("admin.fields.adminFirstName"),
+                adminLastName: t("admin.fields.adminLastName"),
+                adminAccountId: t("admin.fields.adminAccountId"),
+                adminPassword: t("admin.fields.newPassword"),
+                adminPasswordConfirm: t("admin.fields.newPasswordConfirm"),
+              },
+              passwordHint: t("admin.passwordHint"),
+              submit: t("admin.save"),
+              submitting: t("admin.working"),
+              errors: {
+                invalid: t("admin.errors.invalid"),
+                slug_invalid: t("admin.errors.slug_invalid"),
+                slug_reserved: t("admin.errors.slug_reserved"),
+                slug_taken: t("admin.errors.slug_taken"),
+                account_invalid: t("admin.errors.account_invalid"),
+                account_taken: t("admin.errors.account_taken"),
+                password_mismatch: t("admin.errors.password_mismatch"),
+                password_short: t("admin.errors.password_short"),
+                forbidden: t("admin.errors.forbidden"),
+                unavailable: t("admin.errors.unavailable"),
+                failed: t("admin.errors.save_failed"),
+              },
+            },
           }}
         />
       ) : (

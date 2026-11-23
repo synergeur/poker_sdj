@@ -1,3 +1,5 @@
+export const ORGANIZATION_HOST_HEADER = "x-organization-slug";
+
 export type ParsedHost = { kind: "apex" } | { kind: "tenant"; slug: string };
 
 function hostname(value: string): string {
@@ -25,20 +27,33 @@ export function parseRequestHost(hostHeader: string, rootDomain: string): Parsed
   return { kind: "tenant", slug };
 }
 
-export function buildApexSignInUrl(requestUrl: string, rootDomain: string, appUrl?: string): URL {
+export function buildApexUrl(pathname: string, rootDomain: string, appUrl?: string): URL {
+  const path = pathname.startsWith("/") ? pathname : `/${pathname}`;
+
   if (appUrl) {
     const base = appUrl.endsWith("/") ? appUrl : `${appUrl}/`;
-    return new URL("sign-in", base);
+    return new URL(path.slice(1), base);
   }
 
-  const url = new URL(requestUrl);
-  const [domain, port] = rootDomain.trim().toLowerCase().split(":");
-  url.hostname = domain || url.hostname;
-  if (port) {
-    url.port = port;
+  const root = hostname(rootDomain) || "localhost";
+  const port = rootDomain.trim().split(":")[1];
+  const url = new URL(`http://${root}${path}`);
+  if (port) url.port = port;
+  return url;
+}
+
+export function buildTenantUrl(slug: string, pathname: string, rootDomain: string, appUrl?: string): URL {
+  const url = buildApexUrl(pathname, rootDomain, appUrl);
+  const root = hostname(rootDomain) || url.hostname;
+  url.hostname = `${slug}.${root}`;
+  return url;
+}
+
+export function buildApexSignInUrl(requestUrl: string, rootDomain: string, appUrl?: string): URL {
+  const url = buildApexUrl("/sign-in", rootDomain, appUrl);
+  if (!appUrl) {
+    const request = new URL(requestUrl);
+    if (request.port) url.port = request.port;
   }
-  url.pathname = "/sign-in";
-  url.search = "";
-  url.hash = "";
   return url;
 }

@@ -10,7 +10,6 @@ import { BrandMark } from "@/components/brand-mark";
 import { isLanguageShortcut, isTypingTarget } from "@/components/language-switcher";
 import type { Locale } from "@/i18n/locale";
 import { cn } from "@/lib/utils";
-import { signOutAction } from "@/server/actions/auth";
 import { setLocale } from "@/server/actions/locale";
 
 const SIDEBAR_KEY = "casino-room-sidebar-collapsed";
@@ -82,10 +81,10 @@ export function AdminShell({
   }, [locale, router]);
 
   return (
-    <div className="flex min-h-screen flex-col text-violet-50 lg:flex-row">
+    <div className="flex h-dvh flex-col overflow-hidden text-violet-50 lg:flex-row">
       <aside
         className={cn(
-          "flex shrink-0 border-violet-200/10 bg-[#120a22] lg:min-h-screen lg:border-r lg:border-b-0",
+          "flex shrink-0 border-violet-200/10 bg-[#120a22] lg:h-full lg:border-r lg:border-b-0",
           collapsed
             ? "w-full flex-row items-center gap-2 border-b px-3 py-2 lg:w-[72px] lg:flex-col lg:gap-3 lg:px-0 lg:py-4"
             : "flex-col border-b lg:w-[108px]",
@@ -142,24 +141,22 @@ export function AdminShell({
           </button>
         </div>
       </aside>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex flex-wrap items-start justify-between gap-3 px-3 pt-4 lg:px-4">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="flex shrink-0 flex-wrap items-start justify-between gap-3 px-3 pt-4 lg:px-4">
           <div className="min-w-0">
             <h1 className="font-display text-xl font-semibold tracking-tight text-white md:text-[1.65rem]">
               {title}
             </h1>
             <p className="mt-1 max-w-3xl text-sm text-violet-200/70">{subtitle}</p>
           </div>
-          <form action={signOutAction}>
-            <button
-              type="submit"
-              className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-violet-50 hover:bg-white/10"
-            >
-              {signOut}
-            </button>
-          </form>
+          <a
+            href="/auth/sign-out"
+            className="inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-violet-50 hover:bg-white/10"
+          >
+            {signOut}
+          </a>
         </header>
-        <main className="flex flex-col gap-3 p-3 lg:p-4">{children}</main>
+        <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3 lg:p-4">{children}</main>
       </div>
       {settingsOpen ? (
         <SettingsDialog locale={locale} copy={settings} onClose={() => setSettingsOpen(false)} />

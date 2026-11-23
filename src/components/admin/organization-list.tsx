@@ -1,3 +1,6 @@
+import type { ComponentProps } from "react";
+
+import { EditOrganizationButton } from "@/components/admin/edit-organization-dialog";
 import { StatusButton } from "@/components/admin/status-button";
 import { setOrganizationStatusAction } from "@/server/actions/organizations";
 import type { OrganizationListItem } from "@/server/services/organizations";
@@ -23,6 +26,8 @@ export function OrganizationList({
     reactivate: string;
     working: string;
     empty: string;
+    edit: string;
+    editor: ComponentProps<typeof EditOrganizationButton>["copy"];
   };
 }) {
   const date = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
@@ -37,7 +42,7 @@ export function OrganizationList({
 
   return (
     <div className="overflow-x-auto rounded-2xl border border-white/10 bg-[#141226]">
-      <table className="w-full min-w-[760px] text-left text-sm">
+      <table className="w-full min-w-[860px] text-left text-sm">
         <thead className="text-[10px] tracking-[0.14em] text-violet-200/55 uppercase">
           <tr>
             <th className="px-4 py-3 font-semibold">{copy.columns.name}</th>
@@ -64,7 +69,18 @@ export function OrganizationList({
                 </td>
                 <td className="px-4 py-3 text-violet-100/80">{organization.slug}</td>
                 <td className="px-4 py-3 font-semibold text-white">
-                  {organization.adminAccountIds.join(", ") || "—"}
+                  {organization.admins.length === 0
+                    ? "—"
+                    : organization.admins.map((admin) => (
+                        <span key={admin.userId} className="block">
+                          {admin.accountId}
+                          {admin.firstName || admin.lastName ? (
+                            <span className="mt-0.5 block text-xs font-normal text-violet-200/60">
+                              {[admin.firstName, admin.lastName].filter(Boolean).join(" ")}
+                            </span>
+                          ) : null}
+                        </span>
+                      ))}
                 </td>
                 <td className="px-4 py-3 text-violet-100/80">{organization.contactEmail || "—"}</td>
                 <td className="px-4 py-3">
@@ -82,7 +98,13 @@ export function OrganizationList({
                   {date.format(new Date(organization.createdAt))}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <form action={setOrganizationStatusAction}>
+                  <div className="flex justify-end gap-2">
+                    <EditOrganizationButton
+                      organization={organization}
+                      label={copy.edit}
+                      copy={copy.editor}
+                    />
+                    <form action={setOrganizationStatusAction}>
                     <input type="hidden" name="organizationId" value={organization.id} />
                     <input type="hidden" name="status" value={nextStatus} />
                     <StatusButton
@@ -90,7 +112,8 @@ export function OrganizationList({
                       pendingLabel={copy.working}
                       variant={organization.status === "active" ? "danger" : "good"}
                     />
-                  </form>
+                    </form>
+                  </div>
                 </td>
               </tr>
             );
