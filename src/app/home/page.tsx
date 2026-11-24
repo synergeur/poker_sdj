@@ -7,8 +7,7 @@ import { OrganizationShell } from "@/components/organization-shell";
 import { organizationLinks } from "@/lib/organization/links";
 
 import { organizationHandoffUrl } from "@/lib/auth/handoff";
-import { appUrl, rootDomain } from "@/lib/supabase/env";
-import { buildApexUrl, ORGANIZATION_HOST_HEADER, parseRequestHost } from "@/lib/tenant/host";
+import { buildApexUrl, ORGANIZATION_HOST_HEADER, requestSite } from "@/lib/tenant/host";
 import { currentSessionHome, organizationBySlug } from "@/server/authorization/session-home";
 import { navigationAccess } from "@/server/services/scopes";
 
@@ -30,27 +29,25 @@ export default function OrganizationHomePage() {
 
 async function OrganizationHome() {
   const headerStore = await headers();
-  const hostSlug = parseRequestHost(headerStore.get("host") ?? "", rootDomain());
-  const slug = headerStore.get(ORGANIZATION_HOST_HEADER) ?? (hostSlug.kind === "tenant" ? hostSlug.slug : null);
+  const site = requestSite(headerStore.get("host") ?? "", headerStore.get("x-forwarded-proto"));
+  const slug = headerStore.get(ORGANIZATION_HOST_HEADER) ?? (site.host.kind === "tenant" ? site.host.slug : null);
   const home = await currentSessionHome();
-  const domain = rootDomain();
-  const origin = appUrl();
 
   if (!slug) {
-    redirect(home.kind === "host" ? "/admin" : buildApexUrl("/sign-in", domain, origin).href);
+    redirect(home.kind === "host" ? "/admin" : buildApexUrl("/sign-in", site).href);
   }
 
   const ownsOrganization = home.kind === "organization" && home.slug === slug;
   if (home.kind === "organization" && !ownsOrganization) {
-    redirect(organizationHandoffUrl(home.slug, (await cookies()).getAll()));
+    redirect(organizationHandoffUrl(home.slug, (await cookies()).getAll(), site));
   }
   if (!ownsOrganization && home.kind !== "host") {
-    redirect(buildApexUrl("/sign-in", domain, origin).href);
+    redirect(buildApexUrl("/sign-in", site).href);
   }
 
   const organization = await organizationBySlug(slug);
   if (!organization) {
-    redirect(home.kind === "host" ? "/admin" : buildApexUrl("/sign-in", domain, origin).href);
+    redirect(home.kind === "host" ? "/admin" : buildApexUrl("/sign-in", site).href);
   }
 
   const t = await getTranslations();

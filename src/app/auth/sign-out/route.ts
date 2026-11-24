@@ -1,21 +1,20 @@
 import { NextResponse } from "next/server";
 
 import { expiredAuthCookieHeaders } from "@/lib/auth/sign-out-cookies";
-import { publicSupabaseEnv, rootDomain, appUrl } from "@/lib/supabase/env";
-import { buildApexUrl, parseRequestHost } from "@/lib/tenant/host";
+import { publicSupabaseEnv } from "@/lib/supabase/env";
+import { buildApexUrl, cookieDomain, requestSite } from "@/lib/tenant/host";
 
 export async function GET(request: Request) {
-  const host = request.headers.get("host") ?? "";
-  const parsed = parseRequestHost(host, rootDomain());
+  const site = requestSite(request.headers.get("host") ?? "", request.headers.get("x-forwarded-proto"));
   const destination =
-    parsed.kind === "tenant"
-      ? buildApexUrl("/auth/sign-out", rootDomain(), appUrl()).href
-      : buildApexUrl("/sign-in", rootDomain(), appUrl()).href;
+    site.host.kind === "tenant"
+      ? buildApexUrl("/auth/sign-out", site).href
+      : buildApexUrl("/sign-in", site).href;
 
   await revokeSession(request.headers.get("cookie") ?? "");
 
   const response = crossHostResponse(request, destination);
-  const domain = rootDomain().split(":")[0]?.trim().toLowerCase() ?? "";
+  const domain = cookieDomain(site);
   for (const header of expiredAuthCookieHeaders(request.headers.get("cookie") ?? "", domain)) {
     response.headers.append("Set-Cookie", header);
   }

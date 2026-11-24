@@ -1,7 +1,6 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 
-import { appUrl, rootDomain } from "@/lib/supabase/env";
-import { buildTenantUrl } from "@/lib/tenant/host";
+import { buildTenantUrl, type RequestSite } from "@/lib/tenant/host";
 
 const TTL_MS = 60_000;
 
@@ -50,9 +49,10 @@ export function handoffDestination(nextPath: string | null) {
 export function organizationHandoffUrl(
   slug: string,
   cookies: { name: string; value: string }[],
+  site: RequestSite,
   nextPath = "/home",
 ) {
-  const url = buildTenantUrl(slug, "/auth/handoff", rootDomain(), appUrl());
+  const url = buildTenantUrl(slug, "/auth/handoff", site);
   url.searchParams.set("token", sealHandoff(cookies));
   if (nextPath !== "/home" && HANDOFF_PATHS.has(nextPath)) url.searchParams.set("next", nextPath);
   return url.href;

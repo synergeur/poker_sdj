@@ -1,8 +1,9 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { organizationHandoffUrl } from "@/lib/auth/handoff";
+import { requestSite } from "@/lib/tenant/host";
 
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CreateOrganizationForm } from "@/components/admin/create-organization-form";
@@ -25,7 +26,14 @@ export async function AdminScreen({
   if (access.kind === "forbidden") {
     const home = await currentSessionHome();
     if (home.kind === "organization") {
-      redirect(organizationHandoffUrl(home.slug, (await cookies()).getAll()));
+      const headerStore = await headers();
+      redirect(
+        organizationHandoffUrl(
+          home.slug,
+          (await cookies()).getAll(),
+          requestSite(headerStore.get("host") ?? "", headerStore.get("x-forwarded-proto")),
+        ),
+      );
     }
   }
 

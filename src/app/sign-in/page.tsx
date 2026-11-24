@@ -1,5 +1,5 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -8,6 +8,7 @@ import { BrandMark } from "@/components/brand-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
 import { organizationHandoffUrl } from "@/lib/auth/handoff";
+import { requestSite } from "@/lib/tenant/host";
 import { isLocale } from "@/i18n/locale";
 import { currentSessionHome } from "@/server/authorization/session-home";
 
@@ -33,7 +34,14 @@ async function SignInScreen() {
     redirect("/admin");
   }
   if (home.kind === "organization") {
-    redirect(organizationHandoffUrl(home.slug, (await cookies()).getAll()));
+    const headerStore = await headers();
+    redirect(
+      organizationHandoffUrl(
+        home.slug,
+        (await cookies()).getAll(),
+        requestSite(headerStore.get("host") ?? "", headerStore.get("x-forwarded-proto")),
+      ),
+    );
   }
 
   const localeValue = await getLocale();

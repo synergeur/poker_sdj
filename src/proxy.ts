@@ -1,21 +1,20 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { appUrl, publicSupabaseEnv, rootDomain } from "@/lib/supabase/env";
+import { publicSupabaseEnv } from "@/lib/supabase/env";
 import { sharedCookieOptions } from "@/lib/supabase/cookies";
 import { crossHostHomeUrl } from "@/lib/auth/handoff";
 import { decideAccess, type SessionHome } from "@/lib/tenant/access";
-import { ORGANIZATION_HOST_HEADER, parseRequestHost } from "@/lib/tenant/host";
+import { cookieDomain, ORGANIZATION_HOST_HEADER, parseRequestHost, requestSite, type RequestSite } from "@/lib/tenant/host";
 import { lookupSessionHome } from "@/server/authorization/session-home";
 
 export async function proxy(request: NextRequest) {
-  const domain = rootDomain();
-  const parsed = parseRequestHost(request.headers.get("host") ?? "", domain);
-  const slug = parsed.kind === "tenant" ? parsed.slug : null;
+  const site = requestSite(request.headers.get("host") ?? "", request.headers.get("x-forwarded-proto"));
+  const slug = site.host.kind === "tenant" ? site.host.slug : null;
   const env = publicSupabaseEnv();
 
   if (!env) {
-    return finish(request, forward(request, slug), { kind: "anonymous" }, domain);
+    return finish(request, forward(request, slug), { kind: "anonymous" }, site);
   }
 
   let sessionResponse = forward(request, slug);
@@ -30,7 +29,7 @@ export async function proxy(request: NextRequest) {
         });
         sessionResponse = forward(request, slug);
         cookiesToSet.forEach(({ name, value, options }) => {
-          sessionResponse.cookies.set(name, value, sharedCookieOptions(options));
+          sessionResponse.cookies.set(name, value, sharedCookieOptions(options, cookieDomain(site)));
         });
         Object.entries(headers).forEach(([key, value]) => {
           sessionResponse.headers.set(key, value);
@@ -50,17 +49,15 @@ export async function proxy(request: NextRequest) {
     home = { kind: "anonymous" };
   }
 
-  return finish(request, sessionResponse, home, domain);
+  return finish(request, sessionResponse, home, site);
 }
 
-function finish(request: NextRequest, sessionResponse: NextResponse, home: SessionHome, domain: string) {
-  const parsed = parseRequestHost(request.headers.get("host") ?? "", domain);
+function finish(request: NextRequest, sessionResponse: NextResponse, home: SessionHome, site: RequestSite) {
   const decision = decideAccess({
-    host: parsed,
+    host: site.host,
     pathname: request.nextUrl.pathname,
     home,
-    rootDomain: domain,
-    appUrl: appUrl() || request.nextUrl.origin,
+    site,
   });
 
   if (decision.type === "allow") return sessionResponse;
@@ -85,7 +82,7 @@ function forward(request: NextRequest, slug: string | null) {
 
 function redirectPreserving(request: NextRequest, href: string, sessionResponse: NextResponse) {
   const destination = new URL(href);
-  const publicHost = parseRequestHost(request.headers.get("host") ?? "", rootDomain());
+  const publicHost = parseRequestHost(request.headers.get("host") ?? "");
   const devRewroteTenantOntoApex =
     publicHost.kind === "tenant" && destination.origin === request.nextUrl.origin;
 

@@ -8,8 +8,7 @@ import { ScopeManager } from "@/components/scopes/scope-manager";
 import { organizationHandoffUrl } from "@/lib/auth/handoff";
 import { organizationLinks } from "@/lib/organization/links";
 import { isScopeFormError, type ScopeFormError } from "@/lib/scopes/validation";
-import { appUrl, rootDomain } from "@/lib/supabase/env";
-import { buildApexUrl, ORGANIZATION_HOST_HEADER, parseRequestHost } from "@/lib/tenant/host";
+import { buildApexUrl, ORGANIZATION_HOST_HEADER, requestSite } from "@/lib/tenant/host";
 import { currentSessionHome } from "@/server/authorization/session-home";
 import { loadScopeManager, navigationAccess } from "@/server/services/scopes";
 
@@ -37,18 +36,16 @@ async function ScopeManagerScreen({
   searchParams: Promise<{ saved?: string; error?: string; tab?: string }>;
 }) {
   const headerStore = await headers();
-  const hostSlug = parseRequestHost(headerStore.get("host") ?? "", rootDomain());
-  const slug = headerStore.get(ORGANIZATION_HOST_HEADER) ?? (hostSlug.kind === "tenant" ? hostSlug.slug : null);
+  const site = requestSite(headerStore.get("host") ?? "", headerStore.get("x-forwarded-proto"));
+  const slug = headerStore.get(ORGANIZATION_HOST_HEADER) ?? (site.host.kind === "tenant" ? site.host.slug : null);
   const home = await currentSessionHome();
-  const domain = rootDomain();
-  const origin = appUrl();
   const t = await getTranslations();
 
   if (!slug) {
     if (home.kind === "organization") {
-      redirect(organizationHandoffUrl(home.slug, (await cookies()).getAll(), "/scopes"));
+      redirect(organizationHandoffUrl(home.slug, (await cookies()).getAll(), site, "/scopes"));
     }
-    redirect(home.kind === "host" ? "/admin" : buildApexUrl("/sign-in", domain, origin).href);
+    redirect(home.kind === "host" ? "/admin" : buildApexUrl("/sign-in", site).href);
   }
 
   const access = await navigationAccess(slug);

@@ -2,17 +2,16 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { decideAccess } from "./access.ts";
+import { requestSite } from "./host.ts";
 
-const rootDomain = "localhost";
-const appUrl = "http://localhost:3000";
+const site = requestSite("localhost:3000", "http");
 
 test("an organization account on the apex is sent to its own home", () => {
   const decision = decideAccess({
     host: { kind: "apex" },
     pathname: "/sign-in",
     home: { kind: "organization", slug: "salle" },
-    rootDomain,
-    appUrl,
+    site,
   });
 
   assert.deepEqual(decision, { type: "redirect", href: "http://salle.localhost:3000/home" });
@@ -23,8 +22,7 @@ test("an organization account on the apex is sent to its scope manager", () => {
     host: { kind: "apex" },
     pathname: "/scopes",
     home: { kind: "organization", slug: "salle" },
-    rootDomain,
-    appUrl,
+    site,
   });
 
   assert.deepEqual(decision, { type: "redirect", href: "http://salle.localhost:3000/scopes" });
@@ -35,8 +33,7 @@ test("an organization account on the apex is sent to its accounts page", () => {
     host: { kind: "apex" },
     pathname: "/accounts",
     home: { kind: "organization", slug: "salle" },
-    rootDomain,
-    appUrl,
+    site,
   });
 
   assert.deepEqual(decision, { type: "redirect", href: "http://salle.localhost:3000/accounts" });
@@ -47,8 +44,7 @@ test("an organization account on the apex is sent to its employees page", () => 
     host: { kind: "apex" },
     pathname: "/employees",
     home: { kind: "organization", slug: "salle" },
-    rootDomain,
-    appUrl,
+    site,
   });
 
   assert.deepEqual(decision, { type: "redirect", href: "http://salle.localhost:3000/employees" });
@@ -59,8 +55,7 @@ test("an organization account on the apex is sent to its own information", () =>
     host: { kind: "apex" },
     pathname: "/me",
     home: { kind: "organization", slug: "salle" },
-    rootDomain,
-    appUrl,
+    site,
   });
 
   assert.deepEqual(decision, { type: "redirect", href: "http://salle.localhost:3000/me" });
@@ -71,8 +66,7 @@ test("an organization account cannot open the host console", () => {
     host: { kind: "apex" },
     pathname: "/admin",
     home: { kind: "organization", slug: "salle" },
-    rootDomain,
-    appUrl,
+    site,
   });
 
   assert.deepEqual(decision, { type: "redirect", href: "http://salle.localhost:3000/home" });
@@ -83,8 +77,7 @@ test("an organization account cannot open another establishment", () => {
     host: { kind: "tenant", slug: "autre" },
     pathname: "/home",
     home: { kind: "organization", slug: "salle" },
-    rootDomain,
-    appUrl,
+    site,
   });
 
   assert.deepEqual(decision, { type: "redirect", href: "http://salle.localhost:3000/home" });
@@ -95,8 +88,7 @@ test("an organization account stays on its own home", () => {
     host: { kind: "tenant", slug: "salle" },
     pathname: "/home",
     home: { kind: "organization", slug: "salle" },
-    rootDomain,
-    appUrl,
+    site,
   });
 
   assert.deepEqual(decision, { type: "allow" });
@@ -107,8 +99,7 @@ test("sign-out is allowed on the organization host", () => {
     host: { kind: "tenant", slug: "salle" },
     pathname: "/auth/sign-out",
     home: { kind: "organization", slug: "salle" },
-    rootDomain,
-    appUrl,
+    site,
   });
 
   assert.deepEqual(decision, { type: "allow" });
@@ -119,8 +110,7 @@ test("the session handoff can run before the organization cookie exists", () => 
     host: { kind: "tenant", slug: "salle" },
     pathname: "/auth/handoff",
     home: { kind: "anonymous" },
-    rootDomain,
-    appUrl,
+    site,
   });
 
   assert.deepEqual(decision, { type: "allow" });
@@ -131,8 +121,7 @@ test("a signed-out visit to an organization goes to the apex sign-in", () => {
     host: { kind: "tenant", slug: "salle" },
     pathname: "/home",
     home: { kind: "anonymous" },
-    rootDomain,
-    appUrl,
+    site,
   });
 
   assert.deepEqual(decision, { type: "redirect", href: "http://localhost:3000/sign-in" });
@@ -143,8 +132,7 @@ test("the platform host still opens the console", () => {
     host: { kind: "apex" },
     pathname: "/sign-in",
     home: { kind: "host" },
-    rootDomain,
-    appUrl,
+    site,
   });
 
   assert.deepEqual(decision, { type: "redirect", href: "http://localhost:3000/admin" });

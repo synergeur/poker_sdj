@@ -2,15 +2,14 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { handoffDestination, openHandoff } from "@/lib/auth/handoff";
-import { appUrl, rootDomain } from "@/lib/supabase/env";
-import { buildApexUrl } from "@/lib/tenant/host";
+import { buildApexUrl, requestSite } from "@/lib/tenant/host";
 
 const COOKIE_MAX_AGE = 400 * 24 * 60 * 60;
 
 export async function GET(request: Request) {
   const token = new URL(request.url).searchParams.get("token");
   const sessionCookies = token ? openHandoff(token) : null;
-  const signIn = buildApexUrl("/sign-in", rootDomain(), appUrl()).href;
+  const signIn = buildApexUrl("/sign-in", requestSite(request.headers.get("host") ?? "", request.headers.get("x-forwarded-proto"))).href;
 
   if (!sessionCookies || sessionCookies.length === 0) {
     return NextResponse.redirect(signIn);

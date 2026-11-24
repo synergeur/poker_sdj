@@ -6,9 +6,8 @@ import { accountEmail } from "@/lib/auth/account-email";
 import { ACCOUNTS, EMPLOYEES, hasEffectiveScope, SCOPE_MANAGER } from "@/lib/scopes/effective";
 import type { ScopeFormError } from "@/lib/scopes/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { rootDomain } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
-import { ORGANIZATION_HOST_HEADER, parseRequestHost } from "@/lib/tenant/host";
+import { ORGANIZATION_HOST_HEADER, requestSite } from "@/lib/tenant/host";
 import { getAccess } from "@/server/authorization/platform-admin";
 
 export type ScopeRole = {
@@ -69,7 +68,7 @@ function mapError(error: { code?: string; message?: string } | null): ScopeFormE
 
 export async function organizationFromRequest(): Promise<{ id: string; name: string; slug: string } | null> {
   const headerStore = await headers();
-  const parsed = parseRequestHost(headerStore.get("host") ?? "", rootDomain());
+  const parsed = requestSite(headerStore.get("host") ?? "", headerStore.get("x-forwarded-proto")).host;
   const slug = headerStore.get(ORGANIZATION_HOST_HEADER) ?? (parsed.kind === "tenant" ? parsed.slug : null);
   if (!slug) return null;
 

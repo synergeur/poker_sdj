@@ -1,9 +1,10 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { organizationHandoffUrl } from "@/lib/auth/handoff";
+import { requestSite } from "@/lib/tenant/host";
 import { accountEmail } from "@/lib/auth/account-email";
 import { createClient } from "@/lib/supabase/server";
 import { publicSupabaseEnv } from "@/lib/supabase/env";
@@ -43,7 +44,14 @@ export async function signInAction(_state: SignInState, formData: FormData): Pro
 
   if (home.kind === "organization") {
     const store = await cookies();
-    redirect(organizationHandoffUrl(home.slug, store.getAll()));
+    const headerStore = await headers();
+    redirect(
+      organizationHandoffUrl(
+        home.slug,
+        store.getAll(),
+        requestSite(headerStore.get("host") ?? "", headerStore.get("x-forwarded-proto")),
+      ),
+    );
   }
 
   redirect("/admin");

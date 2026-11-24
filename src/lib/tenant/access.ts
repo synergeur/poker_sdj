@@ -1,4 +1,4 @@
-import { buildApexUrl, buildTenantUrl, type ParsedHost } from "@/lib/tenant/host";
+import { buildApexUrl, buildTenantUrl, type ParsedHost, type RequestSite } from "@/lib/tenant/host";
 
 export type SessionHome =
   | { kind: "anonymous" }
@@ -12,13 +12,11 @@ export function decideAccess(input: {
   host: ParsedHost;
   pathname: string;
   home: SessionHome;
-  rootDomain: string;
-  appUrl?: string;
+  site: RequestSite;
 }): AccessDecision {
   const pathname = normalizePath(input.pathname);
-  const apex = (path: string) => buildApexUrl(path, input.rootDomain, input.appUrl).href;
-  const tenant = (slug: string, path = "/home") =>
-    buildTenantUrl(slug, path, input.rootDomain, input.appUrl).href;
+  const apex = (path: string) => buildApexUrl(path, input.site).href;
+  const tenant = (slug: string, path = "/home") => buildTenantUrl(slug, path, input.site).href;
 
   if (input.host.kind === "apex") {
     return decideApex(pathname, input.home, apex, tenant);
