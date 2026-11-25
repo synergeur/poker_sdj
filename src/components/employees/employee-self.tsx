@@ -1,14 +1,15 @@
 "use client";
 
+import { CalendarDays, CircleUser, Clock, MapPin, MessageSquare, Phone, Plus, Trash2, UserRound, X, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 
 import { employeeName, fieldClass, formatDay, formatWhen, hours } from "@/components/employees/format";
-import { SwitchButton } from "@/components/employees/switch-button";
 import { TimeField } from "@/components/employees/time-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { parseEmployeeException, parseEmployeeProfile, parseEmployeeWeek } from "@/lib/employees/validation";
 import type { EmployeeCopy, EmployeeNote, EmployeePerson } from "@/lib/employees/types";
+import { cn } from "@/lib/utils";
 import { saveMyInformationAction } from "@/server/actions/employees";
 
 type DraftDay = {
@@ -184,21 +185,26 @@ export function EmployeeSelf({
           </p>
         </div>
       ) : null}
-      <div className="flex shrink-0 items-start justify-between gap-3 px-4 pt-4">
-        <div className="min-w-0">
-          <h2 className="font-display text-2xl font-semibold text-white">{copy.mine}</h2>
-          <p className="mt-1 text-sm text-violet-100/70">{employeeName(person)}</p>
+      <div className="flex shrink-0 items-center justify-between gap-3 px-4 pt-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid size-12 shrink-0 place-items-center rounded-full bg-violet-600 text-white shadow-md shadow-violet-950/40">
+            <CircleUser size={24} aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <h2 className="font-display text-2xl font-semibold text-white">{copy.mine}</h2>
+            <p className="truncate text-sm text-violet-100/70">{employeeName(person)}</p>
+          </div>
         </div>
-        <p role="status" className="shrink-0 pt-1 text-sm text-violet-200/70">
+        <p role="status" className="shrink-0 text-sm text-violet-200/70">
           {phase === "saving" ? copy.saving : phase === "saved" ? copy.saved : ""}
         </p>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
         <div className="grid items-start gap-4 xl:grid-cols-2">
-          <section className="grid gap-4 rounded-2xl border border-white/10 bg-[#141226] p-4">
-            <h3 className="font-display text-lg font-semibold text-white">{copy.information}</h3>
+          <section className="grid gap-5 rounded-2xl border border-white/10 bg-[#141226] p-4">
+            <CardTitle icon={UserRound} title={copy.informationTitle} hint={copy.informationHint} />
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label={copy.phone} htmlFor="phone">
+              <IconField icon={Phone} label={copy.phone} htmlFor="phone">
                 <Input
                   id="phone"
                   type="tel"
@@ -206,31 +212,34 @@ export function EmployeeSelf({
                   maxLength={40}
                   value={draft.phone}
                   onChange={(event) => setDraft((current) => ({ ...current, phone: event.target.value }))}
+                  className="rounded-full"
                 />
-              </Field>
-              <Field label={copy.address} htmlFor="address">
+              </IconField>
+              <IconField icon={MapPin} label={copy.address} htmlFor="address">
                 <Input
                   id="address"
                   autoComplete="street-address"
                   maxLength={200}
                   value={draft.address}
                   onChange={(event) => setDraft((current) => ({ ...current, address: event.target.value }))}
+                  className="rounded-full"
                 />
-              </Field>
+              </IconField>
             </div>
             <div className="grid gap-3">
-              <p className="text-xs tracking-wide text-violet-200/55 uppercase">{copy.emergency}</p>
+              <CardTitle icon={UserRound} title={copy.emergency} hint={copy.emergencyHint} />
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label={copy.emergencyName} htmlFor="emergencyName">
+                <IconField icon={UserRound} label={copy.emergencyName} htmlFor="emergencyName">
                   <Input
                     id="emergencyName"
                     autoComplete="name"
                     maxLength={80}
                     value={draft.emergencyName}
                     onChange={(event) => setDraft((current) => ({ ...current, emergencyName: event.target.value }))}
+                    className="rounded-full"
                   />
-                </Field>
-                <Field label={copy.emergencyPhone} htmlFor="emergencyPhone">
+                </IconField>
+                <IconField icon={Phone} label={copy.emergencyPhone} htmlFor="emergencyPhone">
                   <Input
                     id="emergencyPhone"
                     type="tel"
@@ -238,141 +247,183 @@ export function EmployeeSelf({
                     maxLength={40}
                     value={draft.emergencyPhone}
                     onChange={(event) => setDraft((current) => ({ ...current, emergencyPhone: event.target.value }))}
+                    className="rounded-full"
                   />
-                </Field>
+                </IconField>
               </div>
             </div>
-            <Field label={copy.other} htmlFor="other">
+            <IconField icon={MessageSquare} label={copy.other} htmlFor="other">
               <textarea
                 id="other"
                 rows={4}
                 maxLength={2000}
                 value={draft.other}
                 onChange={(event) => setDraft((current) => ({ ...current, other: event.target.value }))}
-                className={fieldClass}
+                className={cn(fieldClass, "min-h-28 rounded-2xl")}
               />
-            </Field>
+            </IconField>
           </section>
-          <section className="grid gap-3 rounded-2xl border border-white/10 bg-[#141226] p-4">
-            <div>
-              <h3 className="font-display text-lg font-semibold text-white">{copy.week}</h3>
-              <p className="mt-1 text-sm text-violet-100/65">{copy.weekHint}</p>
+          <section className="grid gap-4 rounded-2xl border border-white/10 bg-[#141226] p-4">
+            <CardTitle icon={CalendarDays} title={copy.week} hint={copy.weekSubtitle} />
+            <div className="hidden grid-cols-[9rem_minmax(0,1fr)_minmax(0,1fr)_3.25rem] gap-3 px-1 text-[11px] tracking-[0.14em] text-violet-200/45 uppercase sm:grid">
+              <span>{copy.day}</span>
+              <span>{copy.from}</span>
+              <span>{copy.to}</span>
+              <span className="sr-only">{copy.available}</span>
             </div>
-            {draft.weekdays.map((day) => (
-              <div key={day.weekday} className="grid items-end gap-2 sm:grid-cols-[9rem_1fr_1fr]">
-                <SwitchButton
-                  pressed={day.available}
-                  onPressedChange={(available) => setDayAvailable(setDraft, day.weekday, available)}
-                  className="h-10"
-                >
-                  {copy.days[day.weekday - 1]}
-                </SwitchButton>
-                <LabeledTime
-                  caption={copy.from}
-                  label={`${copy.days[day.weekday - 1]} ${copy.from}`}
-                  value={day.startsAt}
-                  disabled={!day.available}
-                  hourLabel={copy.hour}
-                  minuteLabel={copy.minute}
-                  onChange={(value) => setDayTime(setDraft, day.weekday, "startsAt", value)}
-                />
-                <LabeledTime
-                  caption={copy.to}
-                  label={`${copy.days[day.weekday - 1]} ${copy.to}`}
-                  value={day.endsAt}
-                  disabled={!day.available}
-                  hourLabel={copy.hour}
-                  minuteLabel={copy.minute}
-                  onChange={(value) => setDayTime(setDraft, day.weekday, "endsAt", value)}
-                />
-              </div>
-            ))}
+            <ul className="grid gap-2">
+              {draft.weekdays.map((day) => (
+                <li key={day.weekday} className="grid items-center gap-2 sm:grid-cols-[9rem_minmax(0,1fr)_minmax(0,1fr)_3.25rem] sm:gap-3">
+                  <span
+                    className={cn(
+                      "inline-flex h-10 items-center justify-center rounded-full px-3 text-sm font-semibold",
+                      day.available ? "bg-violet-600 text-white" : "bg-white/10 text-violet-100/75",
+                    )}
+                  >
+                    {copy.days[day.weekday - 1]}
+                  </span>
+                  <TimeField
+                    label={`${copy.days[day.weekday - 1]} ${copy.from}`}
+                    value={day.startsAt}
+                    disabled={!day.available}
+                    hourLabel={copy.hour}
+                    minuteLabel={copy.minute}
+                    onChange={(value) => setDayTime(setDraft, day.weekday, "startsAt", value)}
+                    className="rounded-full"
+                  />
+                  <TimeField
+                    label={`${copy.days[day.weekday - 1]} ${copy.to}`}
+                    value={day.endsAt}
+                    disabled={!day.available}
+                    hourLabel={copy.hour}
+                    minuteLabel={copy.minute}
+                    onChange={(value) => setDayTime(setDraft, day.weekday, "endsAt", value)}
+                    className="rounded-full"
+                  />
+                  <div className="flex justify-end">
+                    <Toggle
+                      pressed={day.available}
+                      label={copy.days[day.weekday - 1]}
+                      onPressedChange={(available) => setDayAvailable(setDraft, day.weekday, available)}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
           </section>
           <section className="grid gap-4 rounded-2xl border border-white/10 bg-[#141226] p-4 xl:col-span-2">
-            <div>
-              <h3 className="font-display text-lg font-semibold text-white">{copy.exceptions}</h3>
-              <p className="mt-1 text-sm text-violet-100/65">{copy.exceptionHint}</p>
-            </div>
+            <CardTitle icon={CalendarDays} title={copy.exceptions} hint={copy.exceptionSubtitle} />
             {draft.exceptions.length === 0 ? (
               <p className="text-sm text-violet-100/55">{copy.noExceptions}</p>
             ) : (
               <ul className="grid gap-2">
                 {draft.exceptions.map((day) => (
-                  <li key={day.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/5 px-3 py-2">
-                    <span className="text-sm text-white">
-                      {formatDay(day.workDate, copy.locale)}
-                      {" · "}
-                      <span className={day.available ? "font-semibold text-emerald-200" : "text-violet-100/70"}>
-                        {hours(day, copy.unavailable)}
-                      </span>
+                  <li key={day.id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#0c0a16] px-3 py-3">
+                    <span className="flex min-w-0 flex-wrap items-center gap-3 text-sm text-white">
+                      <CalendarDays size={16} className="text-violet-200" aria-hidden="true" />
+                      <span>{formatDay(day.workDate, copy.locale)}</span>
+                      {day.available ? (
+                        <span className="font-semibold text-violet-100">{hours(day, copy.unavailable)}</span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/20 px-2.5 py-1 text-xs font-semibold text-rose-100">
+                          <X size={12} aria-hidden="true" />
+                          {copy.unavailable}
+                        </span>
+                      )}
                     </span>
                     <button
                       type="button"
+                      aria-label={copy.remove}
                       onClick={() =>
                         setDraft((current) => ({
                           ...current,
                           exceptions: current.exceptions.filter((item) => item.id !== day.id),
                         }))
                       }
-                      className="rounded-xl px-3 py-2 text-sm font-semibold text-violet-100/80 hover:bg-white/10 hover:text-white"
+                      className="grid size-9 shrink-0 place-items-center rounded-xl text-violet-100/70 hover:bg-white/10 hover:text-white"
                     >
-                      {copy.remove}
+                      <Trash2 size={16} aria-hidden="true" />
                     </button>
                   </li>
                 ))}
               </ul>
             )}
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
-              <Field label={copy.exceptionDate} htmlFor="exception-date">
-                <Input
-                  id="exception-date"
-                  type="date"
-                  value={exceptionDraft.workDate}
-                  onChange={(event) => setExceptionDraft((current) => ({ ...current, workDate: event.target.value }))}
-                  className="[color-scheme:dark]"
-                />
-              </Field>
-              <LabeledTime
-                caption={copy.from}
-                label={copy.from}
-                value={exceptionDraft.startsAt}
-                disabled={!exceptionDraft.available}
-                hourLabel={copy.hour}
-                minuteLabel={copy.minute}
-                onChange={(value) => setExceptionDraft((current) => ({ ...current, startsAt: value }))}
-              />
-              <LabeledTime
-                caption={copy.to}
-                label={copy.to}
-                value={exceptionDraft.endsAt}
-                disabled={!exceptionDraft.available}
-                hourLabel={copy.hour}
-                minuteLabel={copy.minute}
-                onChange={(value) => setExceptionDraft((current) => ({ ...current, endsAt: value }))}
-              />
-              <SwitchButton
-                pressed={exceptionDraft.available}
-                onPressedChange={(available) =>
-                  setExceptionDraft((current) => ({
-                    ...current,
-                    available,
-                    startsAt: available ? current.startsAt || "09:00" : "",
-                    endsAt: available ? current.endsAt || "17:00" : "",
-                  }))
-                }
-                className="h-10"
-              >
-                {exceptionDraft.available ? copy.available : copy.unavailable}
-              </SwitchButton>
-            </div>
-            <div>
-              <button
-                type="button"
-                onClick={addException}
-                className="rounded-xl px-4 py-2 text-sm font-semibold text-violet-100 ring-1 ring-violet-400/40 ring-inset hover:bg-violet-600/20"
-              >
+            <div className="grid gap-3 rounded-2xl border border-white/10 bg-[#100e20] p-4">
+              <h4 className="flex items-center gap-2 font-display text-base font-semibold text-white">
+                <Plus size={16} className="text-violet-200" aria-hidden="true" />
                 {copy.addException}
-              </button>
+              </h4>
+              <div className="flex flex-wrap items-end gap-3">
+                <IconField icon={CalendarDays} label={copy.exceptionDate} htmlFor="exception-date" className="w-44">
+                  <Input
+                    id="exception-date"
+                    type="date"
+                    value={exceptionDraft.workDate}
+                    onChange={(event) => setExceptionDraft((current) => ({ ...current, workDate: event.target.value }))}
+                    className="rounded-full [color-scheme:dark]"
+                  />
+                </IconField>
+                <div className="grid gap-1.5">
+                  <span className="text-sm font-semibold text-violet-50">{copy.type}</span>
+                  <div className="flex flex-wrap gap-2">
+                    <TypeChoice
+                      pressed={!exceptionDraft.available}
+                      onClick={() =>
+                        setExceptionDraft((current) => ({ ...current, available: false, startsAt: "", endsAt: "" }))
+                      }
+                    >
+                      <X size={14} aria-hidden="true" />
+                      {copy.unavailable}
+                    </TypeChoice>
+                    <TypeChoice
+                      pressed={exceptionDraft.available}
+                      onClick={() =>
+                        setExceptionDraft((current) => ({
+                          ...current,
+                          available: true,
+                          startsAt: current.startsAt || "09:00",
+                          endsAt: current.endsAt || "17:00",
+                        }))
+                      }
+                    >
+                      <Clock size={14} aria-hidden="true" />
+                      {copy.customHours}
+                    </TypeChoice>
+                  </div>
+                </div>
+                <div className="grid w-32 gap-1.5">
+                  <span className="text-sm font-semibold text-violet-50">{copy.from}</span>
+                  <TimeField
+                    label={copy.from}
+                    value={exceptionDraft.startsAt}
+                    disabled={!exceptionDraft.available}
+                    hourLabel={copy.hour}
+                    minuteLabel={copy.minute}
+                    onChange={(value) => setExceptionDraft((current) => ({ ...current, startsAt: value }))}
+                    className="rounded-full"
+                  />
+                </div>
+                <div className="grid w-32 gap-1.5">
+                  <span className="text-sm font-semibold text-violet-50">{copy.to}</span>
+                  <TimeField
+                    label={copy.to}
+                    value={exceptionDraft.endsAt}
+                    disabled={!exceptionDraft.available}
+                    hourLabel={copy.hour}
+                    minuteLabel={copy.minute}
+                    onChange={(value) => setExceptionDraft((current) => ({ ...current, endsAt: value }))}
+                    className="rounded-full"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={addException}
+                  className="inline-flex h-10 items-center gap-1.5 rounded-full bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-500"
+                >
+                  <Plus size={15} aria-hidden="true" />
+                  {copy.addShort}
+                </button>
+              </div>
             </div>
           </section>
           <SharedNotes title={copy.evaluations} notes={person.evaluations} copy={copy} />
@@ -453,35 +504,81 @@ function snapshot(draft: Draft) {
   });
 }
 
-function LabeledTime({
-  caption,
+function CardTitle({ icon: Icon, title, hint }: { icon: LucideIcon; title: string; hint?: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <Icon size={18} className="mt-1 shrink-0 text-violet-200" aria-hidden="true" />
+      <div>
+        <h3 className="font-display text-lg font-semibold text-white">{title}</h3>
+        {hint ? <p className="text-sm text-violet-100/60">{hint}</p> : null}
+      </div>
+    </div>
+  );
+}
+
+function IconField({
+  icon: Icon,
   label,
-  value,
-  disabled,
-  hourLabel,
-  minuteLabel,
-  onChange,
+  htmlFor,
+  className,
+  children,
 }: {
-  caption: string;
+  icon: LucideIcon;
   label: string;
-  value: string;
-  disabled: boolean;
-  hourLabel: string;
-  minuteLabel: string;
-  onChange: (value: string) => void;
+  htmlFor: string;
+  className?: string;
+  children: ReactNode;
 }) {
   return (
-    <div className="grid gap-1.5">
-      <span className="text-xs font-semibold tracking-wide text-violet-200/55 uppercase">{caption}</span>
-      <TimeField
-        label={label}
-        value={value}
-        disabled={disabled}
-        hourLabel={hourLabel}
-        minuteLabel={minuteLabel}
-        onChange={onChange}
-      />
+    <div className={cn("grid gap-1.5", className)}>
+      <Label htmlFor={htmlFor} className="flex items-center gap-1.5 text-sm font-medium text-violet-100/75">
+        <Icon size={14} aria-hidden="true" />
+        {label}
+      </Label>
+      {children}
     </div>
+  );
+}
+
+function Toggle({
+  pressed,
+  label,
+  onPressedChange,
+}: {
+  pressed: boolean;
+  label: string;
+  onPressedChange: (pressed: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={pressed}
+      aria-label={label}
+      onClick={() => onPressedChange(!pressed)}
+      className={cn("relative h-7 w-12 shrink-0 rounded-full transition", pressed ? "bg-violet-600" : "bg-white/15")}
+    >
+      <span
+        aria-hidden="true"
+        className={cn("absolute top-0.5 size-6 rounded-full bg-white shadow-sm transition", pressed ? "left-5" : "left-0.5")}
+      />
+    </button>
+  );
+}
+
+function TypeChoice({ pressed, onClick, children }: { pressed: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={pressed}
+      onClick={onClick}
+      className={cn(
+        "inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-semibold",
+        pressed ? "bg-violet-600 text-white" : "bg-white/10 text-violet-100/75 hover:bg-white/15",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -501,14 +598,5 @@ function SharedNotes({ title, notes, copy }: { title: string; notes: EmployeeNot
         ))}
       </ul>
     </section>
-  );
-}
-
-function Field({ label, htmlFor, children }: { label: string; htmlFor: string; children: ReactNode }) {
-  return (
-    <div className="grid gap-1.5">
-      <Label htmlFor={htmlFor}>{label}</Label>
-      {children}
-    </div>
   );
 }

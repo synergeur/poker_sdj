@@ -18,5 +18,7 @@ test("a damaged handoff token is ignored", () => {
 test("employee pages survive a handoff", () => {
   assert.equal(handoffDestination("/employees"), "/employees");
   assert.equal(handoffDestination("/me"), "/me");
+  assert.equal(handoffDestination("/badbeat"), "/badbeat");
+  assert.equal(handoffDestination("/schedule"), "/schedule");
   assert.equal(handoffDestination("/elsewhere"), "/home");
 });

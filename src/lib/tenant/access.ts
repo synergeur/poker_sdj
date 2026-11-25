@@ -33,7 +33,14 @@ function decideApex(
 ): AccessDecision {
   if (pathname === "/auth/handoff" || pathname === "/auth/sign-out") return { type: "allow" };
 
-  if (pathname === "/scopes" || pathname === "/accounts" || pathname === "/employees" || pathname === "/me") {
+  if (
+    pathname === "/scopes" ||
+    pathname === "/accounts" ||
+    pathname === "/employees" ||
+    pathname === "/me" ||
+    pathname === "/badbeat" ||
+    pathname === "/schedule"
+  ) {
     if (home.kind === "organization") return { type: "redirect", href: tenant(home.slug, pathname) };
     if (home.kind === "host") return { type: "redirect", href: apex("/admin") };
     return { type: "redirect", href: apex("/sign-in") };

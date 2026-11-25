@@ -1,16 +1,15 @@
 "use client";
 
 import { Crown, Info, Lock, Plus, Shield, User, UsersRound, type LucideIcon } from "lucide-react";
-import { useActionState, useState, type ReactNode } from "react";
+import { useActionState, useRef, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ACCOUNTS, EMPLOYEES, SCOPE_MANAGER } from "@/lib/scopes/effective";
 import { roleLabel } from "@/lib/scopes/labels";
 import type { ScopeFormError } from "@/lib/scopes/validation";
 import { cn } from "@/lib/utils";
-import { deleteRoleAction, saveRoleAction, updateMemberAction, type ScopeActionState } from "@/server/actions/scopes";
+import { deleteRoleAction, saveRoleAction, saveRoleScopesAction, updateMemberAction, type ScopeActionState } from "@/server/actions/scopes";
 import type { ScopeManagerData, ScopeMember } from "@/server/services/scopes";
 
 const initialState: ScopeActionState = { error: null };
@@ -57,6 +56,9 @@ export function ScopeManager({
   initialTab: "scopes" | "roles";
 }) {
   const [tab, setTab] = useState(initialTab);
+  const [roleScopes, setRoleScopes] = useState<Record<string, string[]>>({});
+  const roles = data.roles.map((role) => (roleScopes[role.id] ? { ...role, scopes: roleScopes[role.id] } : role));
+  const live = { ...data, roles };
 
   return (
     <div className="grid min-h-0 w-full flex-1 content-start gap-4 overflow-y-auto p-4">
@@ -82,41 +84,84 @@ export function ScopeManager({
           {bannerError}
         </p>
       ) : null}
-      {tab === "scopes" ? <AccessTab data={data} copy={copy} /> : <RolesTab data={data} copy={copy} />}
+      <div className={tab === "scopes" ? "contents" : "hidden"}>
+        <AccessTab data={live} copy={copy} />
+      </div>
+      <div className={tab === "roles" ? "contents" : "hidden"}>
+        <RolesTab
+          data={data}
+          copy={copy}
+          onScopes={(roleId, scopes) => setRoleScopes((current) => ({ ...current, [roleId]: scopes }))}
+        />
+      </div>
     </div>
   );
 }
 
 function AccessTab({ data, copy }: { data: ScopeManagerData; copy: ScopeCopy }) {
   const [userId, setUserId] = useState(data.members[0]?.userId ?? "");
+  const [drafts, setDrafts] = useState<Record<string, { roleId: string; extras: string[] }>>({});
+  const [error, setError] = useState<ScopeFormError | null>(null);
+  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const queue = useRef(Promise.resolve());
+  const draftsRef = useRef<Record<string, { roleId: string; extras: string[] }>>({});
+  const confirmed = useRef<Record<string, { roleId: string; extras: string[] }>>({});
   const member = data.members.find((item) => item.userId === userId) ?? null;
-  const [roleId, setRoleId] = useState(member?.roleId ?? "");
-  const [extras, setExtras] = useState<string[]>(member?.extraScopes ?? []);
-  const [state, action, pending] = useActionState(updateMemberAction, initialState);
-  const selectedRole = data.roles.find((role) => role.id === roleId);
+  const view = member ? (drafts[member.userId] ?? { roleId: member.roleId, extras: member.extraScopes }) : null;
+  const selectedRole = data.roles.find((role) => role.id === view?.roleId);
 
   function selectMember(next: ScopeMember) {
     setUserId(next.userId);
-    setRoleId(next.roleId);
-    setExtras(next.extraScopes);
+    setError(null);
+    setStatus("idle");
+  }
+
+  function commit(person: ScopeMember, nextRoleId: string, nextExtras: string[]) {
+    const next = { roleId: nextRoleId, extras: nextExtras };
+    draftsRef.current = { ...draftsRef.current, [person.userId]: next };
+    setDrafts(draftsRef.current);
+    setStatus("saving");
+    setError(null);
+    queue.current = queue.current
+      .then(async () => {
+        const form = new FormData();
+        form.set("userId", person.userId);
+        form.set("roleId", nextRoleId);
+        form.set("status", person.status);
+        for (const scope of nextExtras) form.append("scopes", scope);
+        const result = await updateMemberAction(initialState, form);
+        const latest = draftsRef.current[person.userId];
+        const current = latest?.roleId === next.roleId && sameList(latest.extras, next.extras);
+        if (result.error) {
+          if (!current) return;
+          const fallback = confirmed.current[person.userId] ?? { roleId: person.roleId, extras: person.extraScopes };
+          draftsRef.current = { ...draftsRef.current, [person.userId]: fallback };
+          setDrafts(draftsRef.current);
+          setError(result.error);
+          setStatus("idle");
+          return;
+        }
+        confirmed.current[person.userId] = next;
+        if (current) setStatus("saved");
+      })
+      .catch(() => undefined);
   }
 
   function toggleScope(scope: string) {
-    if (!member || member.isOwner) return;
+    if (!member || !view || member.isOwner) return;
     if (selectedRole?.scopes.includes(scope)) return;
-    setExtras((current) =>
-      current.includes(scope) ? current.filter((item) => item !== scope) : [...current, scope],
-    );
+    const extras = view.extras.includes(scope) ? view.extras.filter((item) => item !== scope) : [...view.extras, scope];
+    commit(member, view.roleId, extras);
   }
 
   function holdsScope(scope: string) {
-    if (member?.isOwner && (scope === SCOPE_MANAGER || scope === ACCOUNTS || scope === EMPLOYEES)) return true;
-    if (extras.includes(scope)) return true;
+    if (member?.isOwner) return true;
+    if (view?.extras.includes(scope)) return true;
     return selectedRole?.scopes.includes(scope) ?? false;
   }
 
   return (
-    <form action={action} className="grid gap-4">
+    <div className="grid gap-4">
       <div className="grid gap-4 lg:grid-cols-3">
         <Panel title={copy.employees}>
           <ul className="grid gap-1">
@@ -175,7 +220,7 @@ function AccessTab({ data, copy }: { data: ScopeManagerData; copy: ScopeCopy }) 
         <Panel title={copy.roles}>
           <ul className="grid gap-2">
             {data.roles.map((role) => {
-              const on = role.id === roleId;
+              const on = role.id === view?.roleId;
               const assignable = role.name === "staff" || !role.system;
               const locked = Boolean(member?.isOwner) || (!assignable && !on);
               return (
@@ -184,7 +229,10 @@ function AccessTab({ data, copy }: { data: ScopeManagerData; copy: ScopeCopy }) 
                     type="button"
                     aria-pressed={on}
                     disabled={!member || locked}
-                    onClick={() => setRoleId(role.id)}
+                    onClick={() => {
+                      if (!member || !view || role.id === view.roleId) return;
+                      commit(member, role.id, view.extras);
+                    }}
                     className={chipClass(on)}
                   >
                     {roleLabel(role.name, copy)}
@@ -197,26 +245,21 @@ function AccessTab({ data, copy }: { data: ScopeManagerData; copy: ScopeCopy }) 
       </div>
 
       {member && !member.isOwner ? (
-        <>
-          <input type="hidden" name="userId" value={member.userId} />
-          <input type="hidden" name="roleId" value={roleId} />
-          <input type="hidden" name="status" value={member.status} />
-          {extras.map((scope) => (
-            <input key={scope} type="hidden" name="scopes" value={scope} />
-          ))}
-          <FormError error={state.error} errors={copy.errors} />
-          <div>
-            <Button type="submit" disabled={pending || !roleId}>
-              {pending ? copy.saving : copy.save}
-            </Button>
-          </div>
-        </>
+        <SaveStatus status={status} error={error} copy={copy} />
       ) : null}
-    </form>
+    </div>
   );
 }
 
-function RolesTab({ data, copy }: { data: ScopeManagerData; copy: ScopeCopy }) {
+function RolesTab({
+  data,
+  copy,
+  onScopes,
+}: {
+  data: ScopeManagerData;
+  copy: ScopeCopy;
+  onScopes: (roleId: string, scopes: string[]) => void;
+}) {
   const first = data.roles.find((role) => !role.system) ?? data.roles[0];
   const [selection, setSelection] = useState<string | "new">(first?.id ?? "new");
   const role = data.roles.find((item) => item.id === selection) ?? null;
@@ -224,30 +267,74 @@ function RolesTab({ data, copy }: { data: ScopeManagerData; copy: ScopeCopy }) {
   const [description, setDescription] = useState(role?.description ?? "");
   const [scopes, setScopes] = useState<string[]>(role?.scopes ?? []);
   const [state, action, pending] = useActionState(saveRoleAction, initialState);
+  const [scopeError, setScopeError] = useState<ScopeFormError | null>(null);
+  const [scopeStatus, setScopeStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const scopesRef = useRef<string[]>(role?.scopes ?? []);
+  const scopeQueue = useRef(Promise.resolve());
+  const drafted = useRef<Record<string, string[]>>({});
+  const confirmed = useRef<Record<string, string[]>>(
+    Object.fromEntries(data.roles.map((item) => [item.id, [...item.scopes]])),
+  );
   const system = Boolean(role?.system);
 
   function choose(next: string | "new") {
     setSelection(next);
+    setScopeError(null);
+    setScopeStatus("idle");
     if (next === "new") {
       setName("");
       setDescription("");
+      scopesRef.current = [];
       setScopes([]);
       return;
     }
     const picked = data.roles.find((item) => item.id === next);
+    const nextScopes = picked ? [...(drafted.current[picked.id] ?? picked.scopes)] : [];
     setName(picked && !picked.system ? picked.name : "");
     setDescription(picked?.description ?? "");
-    setScopes([...(picked?.scopes ?? [])]);
+    scopesRef.current = nextScopes;
+    setScopes(nextScopes);
   }
 
   function toggle(scope: string) {
-    if (system) return;
-    setScopes((current) =>
-      current.includes(scope) ? current.filter((item) => item !== scope) : [...current, scope],
-    );
+    if (!role || system) return;
+    const current = scopesRef.current;
+    const next = current.includes(scope) ? current.filter((item) => item !== scope) : [...current, scope];
+    scopesRef.current = next;
+    drafted.current[role.id] = next;
+    onScopes(role.id, next);
+    setScopes(next);
+    setScopeStatus("saving");
+    setScopeError(null);
+    const roleId = role.id;
+    const name = role.name;
+    const description = role.description;
+    scopeQueue.current = scopeQueue.current
+      .then(async () => {
+        const result = await saveRoleScopesAction({ roleId, name, description, scopes: next });
+        const latest = scopesRef.current === next;
+        if (result.error) {
+          if (!latest) return;
+          const fallback = confirmed.current[roleId] ?? current;
+          scopesRef.current = fallback;
+          drafted.current[roleId] = fallback;
+          onScopes(roleId, fallback);
+          setScopes(fallback);
+          setScopeError(result.error);
+          setScopeStatus("idle");
+          return;
+        }
+        confirmed.current[roleId] = next;
+        if (latest) setScopeStatus("saved");
+      })
+      .catch(() => undefined);
   }
 
   const heading = selection === "new" ? copy.newRole : roleLabel(role?.name, copy);
+  const textDirty =
+    selection === "new" ||
+    name.trim() !== (role?.name ?? "").trim() ||
+    description.trim() !== (role?.description ?? "").trim();
   const DetailIcon = roleIcon(selection === "new" ? undefined : role?.name);
 
   return (
@@ -375,10 +462,13 @@ function RolesTab({ data, copy }: { data: ScopeManagerData; copy: ScopeCopy }) {
           {!system ? (
             <div className="mt-4">
               <FormError error={state.error} errors={copy.errors} />
+              {role ? <SaveStatus status={scopeStatus} error={scopeError} copy={copy} /> : null}
               <div className="flex flex-wrap items-center gap-2">
-                <Button type="submit" disabled={pending}>
-                  {pending ? (role ? copy.saving : copy.creating) : role ? copy.save : copy.create}
-                </Button>
+                {textDirty ? (
+                  <Button type="submit" disabled={pending}>
+                    {pending ? (role ? copy.saving : copy.creating) : role ? copy.save : copy.create}
+                  </Button>
+                ) : null}
                 {role ? (
                   <button
                     type="submit"
@@ -444,6 +534,28 @@ function TabButton({
       <Icon size={18} />
       {children}
     </button>
+  );
+}
+
+function sameList(left: string[], right: string[]) {
+  return left.length === right.length && left.every((item, index) => item === right[index]);
+}
+
+function SaveStatus({
+  status,
+  error,
+  copy,
+}: {
+  status: "idle" | "saving" | "saved";
+  error: ScopeFormError | null;
+  copy: ScopeCopy;
+}) {
+  if (error) return <FormError error={error} errors={copy.errors} />;
+  if (status === "idle") return null;
+  return (
+    <p role="status" className={cn("mb-3 text-sm", status === "saved" ? "text-emerald-200" : "text-violet-200/70")}>
+      {status === "saving" ? copy.saving : copy.saved}
+    </p>
   );
 }
 

@@ -63,11 +63,16 @@ async function ScopeManagerScreen({
         home: t("scopes.home"),
         mine: t("employees.mine"),
         employees: t("employees.title"),
+        badbeat: t("badbeat.title"),
+        schedule: t("schedule.title"),
         accounts: t("accounts.title"),
         scopes: t("scopes.title"),
         current: "scopes",
         self: access.self,
         manageEmployees: access.employees,
+        badbeatEntry: access.badbeatEntry,
+        badbeatStats: access.badbeatStats,
+        seeSchedule: access.schedule,
         manageAccounts: access.accounts,
         manageScopes: access.scopes,
       })}
@@ -106,7 +111,15 @@ async function ScopeManagerScreen({
           ? t("scopes.catalog.accounts")
           : scope === "employees"
             ? t("scopes.catalog.employees")
-            : scope,
+            : scope === "badbeat_entry"
+              ? t("scopes.catalog.badbeat_entry")
+              : scope === "badbeat_stats"
+                ? t("scopes.catalog.badbeat_stats")
+                : scope === "schedule"
+                  ? t("scopes.catalog.schedule")
+                  : scope === "cashier"
+                    ? t("scopes.catalog.cashier")
+                    : scope,
     ]),
   );
 

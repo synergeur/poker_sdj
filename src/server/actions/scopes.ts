@@ -95,7 +95,28 @@ export async function updateMemberAction(
   if (!organization.ok) return { error: organization.error };
   const saved = await setMemberAccess(organization.id, parsed.data);
   if (!saved.ok) return { error: saved.error };
-  redirect("/scopes?tab=scopes&saved=1");
+  return { error: null };
+}
+
+export async function saveRoleScopesAction(input: {
+  roleId: string;
+  name: string;
+  description: string;
+  scopes: string[];
+}): Promise<ScopeActionState> {
+  const parsed = parseRole(input);
+  if (!parsed.ok) return { error: parsed.error };
+  if (!parsed.data.roleId) return { error: "invalid" };
+  const organization = await organizationId();
+  if (!organization.ok) return { error: organization.error };
+  const saved = await updateRole(organization.id, {
+    roleId: parsed.data.roleId,
+    name: parsed.data.name,
+    description: parsed.data.description,
+    scopes: parsed.data.scopes,
+  });
+  if (!saved.ok) return { error: saved.error };
+  return { error: null };
 }
 
 export async function saveRoleAction(

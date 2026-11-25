@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleUser, House, IdCard, LogOut, Settings, Shield, Users, type LucideIcon } from "lucide-react";
+import { CalendarDays, CircleUser, House, IdCard, LogOut, Settings, Shield, Spade, Users, type LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -166,6 +166,8 @@ function iconFor(href: string): LucideIcon {
   if (href === "/scopes") return Shield;
   if (href === "/accounts") return Users;
   if (href === "/employees") return IdCard;
+  if (href === "/badbeat") return Spade;
+  if (href === "/schedule") return CalendarDays;
   if (href === "/me") return CircleUser;
   return House;
 }

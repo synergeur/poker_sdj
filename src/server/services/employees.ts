@@ -129,6 +129,50 @@ export async function currentEmployeeUserId(): Promise<string | null> {
   return data.user.id;
 }
 
+export type SharedHighlight = {
+  body: string;
+  createdAt: string;
+  authorName: string;
+};
+
+export async function loadOwnSharedHighlights(): Promise<
+  { ok: true; evaluation: SharedHighlight | null; comment: SharedHighlight | null } | { ok: false; error: "forbidden" | "failed" }
+> {
+  const organization = await organizationFromRequest();
+  if (!organization) return { ok: false, error: "forbidden" };
+  try {
+    const supabase = await createClient();
+    const { data: auth, error: authError } = await supabase.auth.getUser();
+    if (authError || !auth.user) return { ok: true, evaluation: null, comment: null };
+    const { data, error } = await supabase
+      .from("employee_notes")
+      .select("kind, body, created_at, author_id")
+      .eq("organization_id", organization.id)
+      .eq("user_id", auth.user.id)
+      .eq("visible_to_employee", true)
+      .order("created_at", { ascending: false });
+    if (error) return { ok: false, error: "failed" };
+
+    const rows = (data ?? []) as { kind: string; body: string; created_at: string; author_id: string }[];
+    const authorIds = [...new Set(rows.map((row) => row.author_id))];
+    const authors = new Map<string, NameRow>();
+    if (authorIds.length > 0) {
+      const authorResult = await supabase.from("profiles").select("id, account_id, first_name, last_name").in("id", authorIds);
+      if (authorResult.error) return { ok: false, error: "failed" };
+      for (const author of (authorResult.data ?? []) as NameRow[]) authors.set(author.id, author);
+    }
+
+    const highlight = (kind: string): SharedHighlight | null => {
+      const row = rows.find((item) => item.kind === kind);
+      if (!row) return null;
+      return { body: row.body, createdAt: row.created_at, authorName: displayName(authors.get(row.author_id)) };
+    };
+    return { ok: true, evaluation: highlight("evaluation"), comment: highlight("comment") };
+  } catch {
+    return { ok: false, error: "failed" };
+  }
+}
+
 export async function loadOwnEmployee(userId: string): Promise<OwnEmployee> {
   const organization = await organizationFromRequest();
   if (!organization) return { ok: false, error: "forbidden" };

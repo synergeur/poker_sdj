@@ -59,7 +59,7 @@ export function AccountList({
     <div className="grid min-h-0 w-full flex-1 content-start gap-4 overflow-y-auto p-4">
       <div className="flex items-center justify-between gap-3">
         <h2 className="font-display text-xl font-semibold text-white">{copy.title}</h2>
-        <Button type="button" onClick={() => setOpen(true)} disabled={!staff}>
+        <Button type="button" className="shrink-0" onClick={() => setOpen(true)} disabled={!staff}>
           {copy.newAccount}
         </Button>
       </div>

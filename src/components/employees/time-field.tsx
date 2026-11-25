@@ -16,6 +16,7 @@ export function TimeField({
   disabled,
   hourLabel,
   minuteLabel,
+  className,
 }: {
   label: string;
   value: string;
@@ -23,6 +24,7 @@ export function TimeField({
   disabled?: boolean;
   hourLabel: string;
   minuteLabel: string;
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [place, setPlace] = useState({ top: 0, left: 0, width: 280 });
@@ -85,6 +87,7 @@ export function TimeField({
         className={cn(
           "flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-white/10 bg-[#0c0a16] px-3 text-sm",
           disabled ? "cursor-not-allowed opacity-40" : "hover:border-violet-400/60",
+          className,
         )}
       >
         <span className={value ? "text-white" : "text-violet-200/35"}>{value || "--:--"}</span>

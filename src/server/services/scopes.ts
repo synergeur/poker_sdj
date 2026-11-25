@@ -3,7 +3,7 @@ import "server-only";
 import { headers } from "next/headers";
 
 import { accountEmail } from "@/lib/auth/account-email";
-import { ACCOUNTS, EMPLOYEES, hasEffectiveScope, SCOPE_MANAGER } from "@/lib/scopes/effective";
+import { ACCOUNTS, BADBEAT_ENTRY, BADBEAT_STATS, EMPLOYEES, hasEffectiveScope, SCHEDULE, SCOPE_MANAGER } from "@/lib/scopes/effective";
 import type { ScopeFormError } from "@/lib/scopes/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -95,13 +95,34 @@ export async function navigationAccess(slug: string): Promise<{
   accounts: boolean;
   scopes: boolean;
   employees: boolean;
+  badbeatEntry: boolean;
+  badbeatStats: boolean;
+  schedule: boolean;
   self: boolean;
 }> {
-  const none = { accounts: false, scopes: false, employees: false, self: false };
+  const none = {
+    accounts: false,
+    scopes: false,
+    employees: false,
+    badbeatEntry: false,
+    badbeatStats: false,
+    schedule: false,
+    self: false,
+  };
   try {
     const person = await viewer();
     if (!person) return none;
-    if (person.host) return { accounts: true, scopes: true, employees: true, self: false };
+    if (person.host) {
+      return {
+        accounts: true,
+        scopes: true,
+        employees: true,
+        badbeatEntry: true,
+        badbeatStats: true,
+        schedule: true,
+        self: false,
+      };
+    }
     const supabase = await createClient();
     const organizationId = await organizationIdBySlug(supabase, slug);
     if (!organizationId) return none;
@@ -111,6 +132,9 @@ export async function navigationAccess(slug: string): Promise<{
       accounts: hasEffectiveScope(held, ACCOUNTS),
       scopes: hasEffectiveScope(held, SCOPE_MANAGER),
       employees: hasEffectiveScope(held, EMPLOYEES),
+      badbeatEntry: hasEffectiveScope(held, BADBEAT_ENTRY),
+      badbeatStats: hasEffectiveScope(held, BADBEAT_STATS),
+      schedule: hasEffectiveScope(held, SCHEDULE),
       self: true,
     };
   } catch {
