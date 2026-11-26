@@ -6,7 +6,7 @@ import { Suspense } from "react";
 import { formatWhen } from "@/components/employees/format";
 import { OrganizationShell } from "@/components/organization-shell";
 import { WeekSchedule } from "@/components/schedule/week-schedule";
-import { organizationLinks } from "@/lib/organization/links";
+import { shellNav } from "@/lib/organization/links";
 
 import { organizationHandoffUrl } from "@/lib/auth/handoff";
 import { buildApexUrl, ORGANIZATION_HOST_HEADER, requestSite } from "@/lib/tenant/host";
@@ -58,23 +58,7 @@ async function OrganizationHome() {
   const locale = await getLocale();
   const access = await navigationAccess(slug);
   const [mine, highlights] = await Promise.all([loadOwnShifts(), loadOwnSharedHighlights()]);
-  const links = organizationLinks({
-    home: t("scopes.home"),
-    mine: t("employees.mine"),
-        employees: t("employees.title"),
-        badbeat: t("badbeat.title"),
-        schedule: t("schedule.title"),
-        accounts: t("accounts.title"),
-    scopes: t("scopes.title"),
-    current: "home",
-        self: access.self,
-        manageEmployees: access.employees,
-        badbeatEntry: access.badbeatEntry,
-        badbeatStats: access.badbeatStats,
-        seeSchedule: access.schedule,
-        manageAccounts: access.accounts,
-    manageScopes: access.scopes,
-  });
+  const nav = shellNav("overview", access);
 
   return (
     <OrganizationShell
@@ -83,7 +67,7 @@ async function OrganizationHome() {
       title={organization.name}
       signOutHref="/auth/sign-out"
       signOutLabel={t("admin.signOut")}
-      links={links}
+      nav={nav}
     >
       <main className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
         <div className="grid shrink-0 gap-3 md:grid-cols-2">

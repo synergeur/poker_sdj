@@ -18,6 +18,46 @@
     "en": "English",
     "fr": "French"
   },
+  "nav": {
+    "overview": "Overview",
+    "inDevTitle": "In dev",
+    "inDevBody": "This section is not available yet.",
+    "showDev": "In dev",
+    "groups": {
+      "me": "Me",
+      "operations": "Operations",
+      "workforce": "Workforce",
+      "management": "Management",
+      "analytics": "Analytics",
+      "administration": "Administration"
+    },
+    "items": {
+      "open-close": "Reconciliation",
+      "gaming-floor": "Gaming floor",
+      "dealer-rotation": "Dealer rotation",
+      "tournaments": "Tournaments",
+      "cashier": "Cashier",
+      "supervisor-logbook": "Supervisor logbook",
+      "incidents": "Incidents",
+      "employees": "Employees",
+      "me": "My information",
+      "schedule": "Schedule",
+      "time-attendance": "Time & attendance",
+      "requests": "Requests",
+      "training": "Training",
+      "tasks": "Tasks & checklists",
+      "announcements": "Announcements",
+      "knowledge-base": "Knowledge base",
+      "inventory": "Inventory",
+      "badbeat": "Bad beat",
+      "statistics": "Operational statistics",
+      "reports": "Reports",
+      "accounts": "Accounts",
+      "scopes": "Scopes & roles",
+      "audit-logs": "Audit logs",
+      "organization-settings": "Organization settings"
+    }
+  },
   "home": {
     "eyebrow": "Establishment",
     "subtitle": "You are signed in to this establishment.",

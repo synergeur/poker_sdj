@@ -6,7 +6,7 @@ import { Suspense, type ReactNode } from "react";
 import { OrganizationShell } from "@/components/organization-shell";
 import { ScopeManager } from "@/components/scopes/scope-manager";
 import { organizationHandoffUrl } from "@/lib/auth/handoff";
-import { organizationLinks } from "@/lib/organization/links";
+import { shellNav } from "@/lib/organization/links";
 import { isScopeFormError, type ScopeFormError } from "@/lib/scopes/validation";
 import { buildApexUrl, ORGANIZATION_HOST_HEADER, requestSite } from "@/lib/tenant/host";
 import { currentSessionHome } from "@/server/authorization/session-home";
@@ -59,23 +59,7 @@ async function ScopeManagerScreen({
       title={loaded.ok && loaded.data ? loaded.data.organizationName : t("scopes.title")}
       signOutHref="/auth/sign-out"
       signOutLabel={t("admin.signOut")}
-      links={organizationLinks({
-        home: t("scopes.home"),
-        mine: t("employees.mine"),
-        employees: t("employees.title"),
-        badbeat: t("badbeat.title"),
-        schedule: t("schedule.title"),
-        accounts: t("accounts.title"),
-        scopes: t("scopes.title"),
-        current: "scopes",
-        self: access.self,
-        manageEmployees: access.employees,
-        badbeatEntry: access.badbeatEntry,
-        badbeatStats: access.badbeatStats,
-        seeSchedule: access.schedule,
-        manageAccounts: access.accounts,
-        manageScopes: access.scopes,
-      })}
+      nav={shellNav("scopes", access)}
     >
       {content}
     </OrganizationShell>

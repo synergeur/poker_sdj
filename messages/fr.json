@@ -18,6 +18,46 @@
     "en": "Anglais",
     "fr": "Français"
   },
+  "nav": {
+    "overview": "Aperçu",
+    "inDevTitle": "En développement",
+    "inDevBody": "Cette section n'est pas encore disponible.",
+    "showDev": "En développement",
+    "groups": {
+      "me": "Moi",
+      "operations": "Opérations",
+      "workforce": "Personnel",
+      "management": "Gestion",
+      "analytics": "Analyse",
+      "administration": "Administration"
+    },
+    "items": {
+      "open-close": "Conciliation",
+      "gaming-floor": "Salle de jeu",
+      "dealer-rotation": "Rotation des croupiers",
+      "tournaments": "Tournois",
+      "cashier": "Caisse",
+      "supervisor-logbook": "Journal du superviseur",
+      "incidents": "Incidents",
+      "employees": "Employés",
+      "me": "Mes informations",
+      "schedule": "Horaire",
+      "time-attendance": "Temps et présence",
+      "requests": "Demandes",
+      "training": "Formation",
+      "tasks": "Tâches et listes",
+      "announcements": "Annonces",
+      "knowledge-base": "Base de connaissances",
+      "inventory": "Inventaire",
+      "badbeat": "Bad beat",
+      "statistics": "Statistiques opérationnelles",
+      "reports": "Rapports",
+      "accounts": "Comptes",
+      "scopes": "Périmètres et rôles",
+      "audit-logs": "Journaux d'audit",
+      "organization-settings": "Paramètres de l'organisation"
+    }
+  },
   "home": {
     "eyebrow": "Établissement",
     "subtitle": "Vous êtes connecté à cet établissement.",

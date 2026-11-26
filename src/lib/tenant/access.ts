@@ -39,7 +39,8 @@ function decideApex(
     pathname === "/employees" ||
     pathname === "/me" ||
     pathname === "/badbeat" ||
-    pathname === "/schedule"
+    pathname === "/schedule" ||
+    pathname === "/dev"
   ) {
     if (home.kind === "organization") return { type: "redirect", href: tenant(home.slug, pathname) };
     if (home.kind === "host") return { type: "redirect", href: apex("/admin") };
