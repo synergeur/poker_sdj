@@ -5,6 +5,7 @@ import {
   Calendar,
   Check,
   Coins,
+  Download,
   Hash,
   Pencil,
   Plus,
@@ -25,6 +26,9 @@ import { TimeField } from "@/components/employees/time-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { downloadBlob, type DownloadKind } from "@/lib/download";
+import { badbeatPdf } from "@/lib/badbeat/pdf";
+import { buildBadbeatReport, monthRange, reportCsv, reportXlsx, type BadbeatReportCopy } from "@/lib/badbeat/report";
 import {
   badbeatInsights,
   badbeatPeriodRange,
@@ -45,6 +49,35 @@ type Copy = {
   headline: string;
   subtitle: string;
   statsTitle: string;
+  export: string;
+  from: string;
+  to: string;
+  format: string;
+  formatXlsx: string;
+  formatCsv: string;
+  formatPdf: string;
+  download: string;
+  invalidRange: string;
+  summaryTitle: string;
+  registerTitle: string;
+  trendsTitle: string;
+  summarySheet: string;
+  registerSheet: string;
+  trendsSheet: string;
+  periodPrefix: string;
+  asOf: string;
+  exportWord: string;
+  keyStats: string;
+  contextTitle: string;
+  bestDay: string;
+  highestOn: string;
+  busiestOn: string;
+  window: string;
+  addedToday: string;
+  cumul: string;
+  addedAmount: string;
+  yes: string;
+  no: string;
   trends: string;
   period: string;
   thisMonth: string;
@@ -161,6 +194,10 @@ export function BadbeatLog({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [period, setPeriod] = useState<BadbeatPeriod>("month");
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportFrom, setExportFrom] = useState("");
+  const [exportTo, setExportTo] = useState("");
+  const [exportFormat, setExportFormat] = useState<DownloadKind>("pdf");
   const [chart, setChart] = useState<"amount" | "customers">("amount");
   const [sort, setSort] = useState<{ key: BadbeatSortKey; direction: "asc" | "desc" }>({
     key: "date",
@@ -235,6 +272,20 @@ export function BadbeatLog({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-10 rounded-full px-4"
+            onClick={() => {
+              const month = monthRange(today);
+              setExportFrom(month.start);
+              setExportTo(month.end);
+              setExportOpen(true);
+            }}
+          >
+            <Download size={15} aria-hidden="true" />
+            {copy.export}
+          </Button>
           <label className="relative">
             <span className="sr-only">{copy.period}</span>
             <Calendar size={15} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-violet-200" aria-hidden="true" />
@@ -395,6 +446,67 @@ export function BadbeatLog({
           </div>
         ) : null}
       </div>
+      {exportOpen ? (
+        <ExportDialog
+          copy={copy}
+          from={exportFrom}
+          to={exportTo}
+          format={exportFormat}
+          onFrom={setExportFrom}
+          onTo={setExportTo}
+          onFormat={setExportFormat}
+          onClose={() => setExportOpen(false)}
+          onDownload={() => {
+            const reportCopy: BadbeatReportCopy = {
+              summaryTitle: copy.summaryTitle,
+              registerTitle: copy.registerTitle,
+              trendsTitle: copy.trendsTitle,
+              summarySheet: copy.summarySheet,
+              registerSheet: copy.registerSheet,
+              trendsSheet: copy.trendsSheet,
+              periodPrefix: copy.periodPrefix,
+              asOf: copy.asOf,
+              exportWord: copy.exportWord,
+              keyStats: copy.keyStats,
+              context: copy.contextTitle,
+              bestDay: copy.bestDay,
+              highestOn: copy.highestOn,
+              busiestOn: copy.busiestOn,
+              window: copy.window,
+              current: copy.current,
+              addedToday: copy.addedToday,
+              carryover: copy.carryover,
+              wins: copy.wins,
+              periodTotal: copy.periodTotal,
+              entries: copy.periodEntries,
+              averageCustomers: copy.averageCustomers,
+              entriesToday: copy.dayEntries,
+              highestDay: copy.highestDay,
+              medianCustomers: copy.medianCustomers,
+              busiestDay: copy.busiestDay,
+              averageDay: copy.averageDay,
+              lastWon: copy.lastWon,
+              date: copy.date,
+              time: copy.time,
+              customers: copy.customers,
+              cumul: copy.cumul,
+              comment: copy.comment,
+              won: copy.won,
+              added: copy.addedAmount,
+              yes: copy.yes,
+              no: copy.no,
+              none: copy.none,
+              rule: copy.rule,
+            };
+            const report = buildBadbeatReport(rows, today, exportFrom, exportTo, reportCopy, locale);
+            const name = `badbeat-${exportFrom}_${exportTo}`;
+            if (exportFormat === "csv") downloadBlob(name, reportCsv(report, locale), "csv");
+            else if (exportFormat === "pdf") downloadBlob(name, badbeatPdf(report, locale), "pdf");
+            else downloadBlob(name, reportXlsx(report), "xlsx");
+            setExportOpen(false);
+          }}
+        />
+      ) : null}
       {editing ? (
         <EntryModal
           entry={editing}
@@ -555,6 +667,94 @@ function TrendChart({ points, mode, locale }: { points: BadbeatTrendPoint[]; mod
         ))}
       </div>
     </figure>
+  );
+}
+
+function ExportDialog({
+  copy,
+  from,
+  to,
+  format,
+  onFrom,
+  onTo,
+  onFormat,
+  onClose,
+  onDownload,
+}: {
+  copy: Copy;
+  from: string;
+  to: string;
+  format: DownloadKind;
+  onFrom: (value: string) => void;
+  onTo: (value: string) => void;
+  onFormat: (value: DownloadKind) => void;
+  onClose: () => void;
+  onDownload: () => void;
+}) {
+  const invalid = !from || !to || from > to;
+  const formats: Array<{ id: DownloadKind; label: string }> = [
+    { id: "pdf", label: copy.formatPdf },
+    { id: "xlsx", label: copy.formatXlsx },
+    { id: "csv", label: copy.formatCsv },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onMouseDown={onClose}>
+      <form
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="badbeat-export-title"
+        className="w-full max-w-md rounded-2xl border border-white/10 bg-[#141226] p-5 shadow-lg shadow-black/40"
+        onMouseDown={(event) => event.stopPropagation()}
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!invalid) onDownload();
+        }}
+      >
+        <h2 id="badbeat-export-title" className="font-display text-lg font-semibold text-white">
+          {copy.export}
+        </h2>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-1.5">
+            <Label htmlFor="badbeat-export-from">{copy.from}</Label>
+            <Input id="badbeat-export-from" type="date" required value={from} onChange={(event) => onFrom(event.target.value)} className="[color-scheme:dark]" />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="badbeat-export-to">{copy.to}</Label>
+            <Input id="badbeat-export-to" type="date" required value={to} onChange={(event) => onTo(event.target.value)} className="[color-scheme:dark]" />
+          </div>
+        </div>
+        <fieldset className="mt-4">
+          <legend className="text-sm text-violet-100/70">{copy.format}</legend>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {formats.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                aria-pressed={format === item.id}
+                onClick={() => onFormat(item.id)}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-sm font-semibold",
+                  format === item.id ? "bg-violet-600 text-white" : "bg-white/5 text-violet-100/70 hover:text-white",
+                )}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        {invalid && from && to ? <p className="mt-3 text-sm text-rose-200">{copy.invalidRange}</p> : null}
+        <div className="mt-4 flex justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            {copy.cancel}
+          </Button>
+          <Button type="submit" disabled={invalid}>
+            <Download size={15} aria-hidden="true" />
+            {copy.download}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }
 

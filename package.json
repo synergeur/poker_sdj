@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --experimental-strip-types --import ./scripts/register-test.mjs --test src/lib/validation/slug.test.ts src/lib/validation/account-id.test.ts src/lib/tenant/host.test.ts src/lib/tenant/access.test.ts src/lib/auth/handoff.test.ts src/lib/auth/sign-out-cookies.test.ts src/i18n/locale.test.ts src/lib/validation/organization.test.ts src/lib/scopes/effective.test.ts src/lib/scopes/validation.test.ts src/lib/employees/validation.test.ts src/lib/badbeat/validation.test.ts src/lib/badbeat/stats.test.ts src/lib/schedule/bands.test.ts src/lib/schedule/shifts.test.ts src/lib/schedule/week.test.ts src/lib/organization/links.test.ts"
+    "test": "node --experimental-strip-types --import ./scripts/register-test.mjs --test src/lib/validation/slug.test.ts src/lib/validation/account-id.test.ts src/lib/tenant/host.test.ts src/lib/tenant/access.test.ts src/lib/auth/handoff.test.ts src/lib/auth/sign-out-cookies.test.ts src/i18n/locale.test.ts src/lib/validation/organization.test.ts src/lib/scopes/effective.test.ts src/lib/scopes/validation.test.ts src/lib/employees/validation.test.ts src/lib/badbeat/validation.test.ts src/lib/badbeat/stats.test.ts src/lib/badbeat/report.test.ts src/lib/schedule/bands.test.ts src/lib/schedule/shifts.test.ts src/lib/schedule/week.test.ts src/lib/organization/links.test.ts"
   },
   "dependencies": {
     "@fontsource/outfit": "^5.3.0",
