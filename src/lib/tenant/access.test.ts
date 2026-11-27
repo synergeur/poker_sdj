@@ -61,6 +61,17 @@ test("an organization account on the apex is sent to its bad beat log", () => {
   assert.deepEqual(decision, { type: "redirect", href: "http://salle.localhost:3000/badbeat" });
 });
 
+test("an organization account on the apex is sent to its promotions", () => {
+  const decision = decideAccess({
+    host: { kind: "apex" },
+    pathname: "/promotions",
+    home: { kind: "organization", slug: "salle" },
+    site,
+  });
+
+  assert.deepEqual(decision, { type: "redirect", href: "http://salle.localhost:3000/promotions" });
+});
+
 test("an organization account on the apex is sent to its schedule", () => {
   const decision = decideAccess({
     host: { kind: "apex" },

@@ -12,6 +12,7 @@ import {
   Eye,
   EyeOff,
   FileText,
+  Gift,
   GraduationCap,
   House,
   Inbox,
@@ -143,6 +144,7 @@ export function OrganizationShell({
         cashier: translations("nav.items.cashier"),
         "supervisor-logbook": translations("nav.items.supervisor-logbook"),
         incidents: translations("nav.items.incidents"),
+        promotions: translations("nav.items.promotions"),
         employees: translations("nav.items.employees"),
         me: translations("nav.items.me"),
         schedule: translations("nav.items.schedule"),
@@ -165,10 +167,10 @@ export function OrganizationShell({
   });
 
   return (
-    <div className="flex h-dvh overflow-hidden text-violet-50">
+    <div className="app-shell fixed inset-0 flex overflow-hidden text-violet-50">
       <aside
         className={cn(
-          "flex h-full w-[4.75rem] shrink-0 flex-col border-r border-violet-200/10 bg-[#120a22]",
+          "flex h-full w-[4.75rem] shrink-0 flex-col overflow-hidden border-r border-violet-200/10 bg-[#120a22]",
           wide && "md:w-60",
         )}
       >
@@ -289,6 +291,7 @@ function iconFor(id: NavId): LucideIcon {
     cashier: Wallet,
     "supervisor-logbook": BookOpen,
     incidents: AlertTriangle,
+    promotions: Gift,
     employees: Users,
     me: CircleUser,
     schedule: CalendarDays,

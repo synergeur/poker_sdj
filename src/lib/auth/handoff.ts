@@ -39,7 +39,7 @@ export function openHandoff(token: string): { name: string; value: string }[] | 
   }
 }
 
-const HANDOFF_PATHS = new Set(["/home", "/scopes", "/accounts", "/employees", "/me", "/badbeat", "/schedule", "/dev", "/admin"]);
+const HANDOFF_PATHS = new Set(["/home", "/scopes", "/accounts", "/employees", "/me", "/badbeat", "/promotions", "/schedule", "/dev", "/admin"]);
 
 export function handoffDestination(nextPath: string | null) {
   if (nextPath && nextPath !== "/home" && HANDOFF_PATHS.has(nextPath)) return nextPath;

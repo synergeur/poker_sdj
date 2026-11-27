@@ -10,13 +10,14 @@ import {
   EMPLOYEES,
   hasEffectiveScope,
   hasScopeManager,
+  PROMOTIONS,
   SCHEDULE,
   SCOPE_MANAGER,
 } from "./effective.ts";
 
 test("the main account keeps every scope", () => {
   const scopes = effectiveScopes({ isOwner: true, roleScopes: [], extraScopes: [] });
-  assert.deepEqual(scopes, [ACCOUNTS, BADBEAT_ENTRY, BADBEAT_STATS, CASHIER, EMPLOYEES, SCHEDULE, SCOPE_MANAGER]);
+  assert.deepEqual(scopes, [ACCOUNTS, BADBEAT_ENTRY, BADBEAT_STATS, CASHIER, EMPLOYEES, PROMOTIONS, SCHEDULE, SCOPE_MANAGER]);
   assert.equal(hasScopeManager({ isOwner: true, roleScopes: [], extraScopes: [] }), true);
   assert.equal(hasEffectiveScope({ isOwner: true, roleScopes: [], extraScopes: [] }, ACCOUNTS), true);
   assert.equal(hasEffectiveScope({ isOwner: true, roleScopes: [], extraScopes: [] }, EMPLOYEES), true);

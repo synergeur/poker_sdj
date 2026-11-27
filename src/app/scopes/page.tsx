@@ -101,8 +101,10 @@ async function ScopeManagerScreen({
                 ? t("scopes.catalog.badbeat_stats")
                 : scope === "schedule"
                   ? t("scopes.catalog.schedule")
-                  : scope === "cashier"
-                    ? t("scopes.catalog.cashier")
+                : scope === "cashier"
+                  ? t("scopes.catalog.cashier")
+                  : scope === "promotions"
+                    ? t("scopes.catalog.promotions")
                     : scope,
     ]),
   );

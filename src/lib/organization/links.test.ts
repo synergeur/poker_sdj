@@ -21,6 +21,7 @@ const labels = {
     cashier: "Cashier",
     "supervisor-logbook": "Supervisor logbook",
     incidents: "Incidents",
+    promotions: "Promotions",
     employees: "Employees",
     me: "My information",
     schedule: "Schedule",
@@ -48,6 +49,7 @@ test("the sidebar follows the workspace groups and sends missing sections to the
       self: true,
       employees: true,
       badbeat: true,
+      promotions: true,
       schedule: true,
       accounts: true,
       scopes: true,
@@ -65,9 +67,14 @@ test("the sidebar follows the workspace groups and sends missing sections to the
   assert.equal(menu.sections[0]?.items[0]?.href, "/me");
   assert.deepEqual(
     menu.sections[1]?.items.map((item) => item.id),
-    ["open-close", "gaming-floor", "dealer-rotation", "tournaments", "cashier", "supervisor-logbook", "incidents"],
+    ["promotions", "open-close", "gaming-floor", "dealer-rotation", "tournaments", "cashier", "supervisor-logbook", "incidents"],
   );
-  assert.equal(menu.sections[1]?.items.every((item) => item.dev && item.href.startsWith("/dev?section=")), true);
+  assert.equal(menu.sections[1]?.items.find((item) => item.id === "promotions")?.href, "/promotions");
+  assert.equal(menu.sections[1]?.items.find((item) => item.id === "promotions")?.dev, false);
+  assert.equal(
+    menu.sections[1]?.items.filter((item) => item.id !== "promotions").every((item) => item.dev && item.href.startsWith("/dev?section=")),
+    true,
+  );
   assert.equal(menu.sections[2]?.items.find((item) => item.id === "employees")?.href, "/employees");
   assert.equal(menu.sections[2]?.items.some((item) => item.id === "me"), false);
   assert.equal(menu.sections[4]?.items.find((item) => item.id === "badbeat")?.dev, false);
@@ -80,6 +87,7 @@ test("red sections stay hidden until the sidebar asks for them", () => {
       self: true,
       employees: true,
       badbeat: true,
+      promotions: true,
       schedule: true,
       accounts: true,
       scopes: true,
@@ -89,7 +97,8 @@ test("red sections stay hidden until the sidebar asks for them", () => {
 
   assert.deepEqual(
     menu.sections.map((section) => section.id),
-    ["me", "workforce", "analytics", "administration"],
+    ["me", "operations", "workforce", "analytics", "administration"],
   );
+  assert.deepEqual(menu.sections.find((section) => section.id === "operations")?.items.map((item) => item.id), ["promotions"]);
   assert.equal(menu.sections.every((section) => section.items.every((item) => !item.dev)), true);
 });

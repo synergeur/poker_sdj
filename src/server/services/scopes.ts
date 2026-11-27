@@ -3,7 +3,7 @@ import "server-only";
 import { headers } from "next/headers";
 
 import { accountEmail } from "@/lib/auth/account-email";
-import { ACCOUNTS, BADBEAT_ENTRY, BADBEAT_STATS, EMPLOYEES, hasEffectiveScope, SCHEDULE, SCOPE_MANAGER } from "@/lib/scopes/effective";
+import { ACCOUNTS, BADBEAT_ENTRY, BADBEAT_STATS, EMPLOYEES, hasEffectiveScope, PROMOTIONS, SCHEDULE, SCOPE_MANAGER } from "@/lib/scopes/effective";
 import type { ScopeFormError } from "@/lib/scopes/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -97,6 +97,7 @@ export async function navigationAccess(slug: string): Promise<{
   employees: boolean;
   badbeatEntry: boolean;
   badbeatStats: boolean;
+  promotions: boolean;
   schedule: boolean;
   self: boolean;
 }> {
@@ -106,6 +107,7 @@ export async function navigationAccess(slug: string): Promise<{
     employees: false,
     badbeatEntry: false,
     badbeatStats: false,
+    promotions: false,
     schedule: false,
     self: false,
   };
@@ -119,6 +121,7 @@ export async function navigationAccess(slug: string): Promise<{
         employees: true,
         badbeatEntry: true,
         badbeatStats: true,
+        promotions: true,
         schedule: true,
         self: false,
       };
@@ -134,6 +137,7 @@ export async function navigationAccess(slug: string): Promise<{
       employees: hasEffectiveScope(held, EMPLOYEES),
       badbeatEntry: hasEffectiveScope(held, BADBEAT_ENTRY),
       badbeatStats: hasEffectiveScope(held, BADBEAT_STATS),
+      promotions: hasEffectiveScope(held, PROMOTIONS),
       schedule: hasEffectiveScope(held, SCHEDULE),
       self: true,
     };

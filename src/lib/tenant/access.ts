@@ -39,6 +39,7 @@ function decideApex(
     pathname === "/employees" ||
     pathname === "/me" ||
     pathname === "/badbeat" ||
+    pathname === "/promotions" ||
     pathname === "/schedule" ||
     pathname === "/dev"
   ) {

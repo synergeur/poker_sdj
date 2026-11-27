@@ -7,6 +7,7 @@ export type NavId =
   | "cashier"
   | "supervisor-logbook"
   | "incidents"
+  | "promotions"
   | "employees"
   | "me"
   | "schedule"
@@ -29,6 +30,7 @@ export type NavAccess = {
   self: boolean;
   employees: boolean;
   badbeat: boolean;
+  promotions: boolean;
   schedule: boolean;
   accounts: boolean;
   scopes: boolean;
@@ -89,6 +91,7 @@ export function shellNav(
     employees: boolean;
     badbeatEntry: boolean;
     badbeatStats: boolean;
+    promotions: boolean;
     schedule: boolean;
     accounts: boolean;
     scopes: boolean;
@@ -100,6 +103,7 @@ export function shellNav(
       self: access.self,
       employees: access.employees,
       badbeat: access.badbeatEntry || access.badbeatStats,
+      promotions: access.promotions,
       schedule: access.schedule,
       accounts: access.accounts,
       scopes: access.scopes,
@@ -134,6 +138,7 @@ export function buildOrganizationNav(input: {
     {
       id: "operations",
       items: [
+        item("promotions", "/promotions", input.access.promotions),
         item("open-close", ""),
         item("gaming-floor", ""),
         item("dealer-rotation", ""),

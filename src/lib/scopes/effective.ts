@@ -5,8 +5,9 @@ export const BADBEAT_ENTRY = "badbeat_entry";
 export const BADBEAT_STATS = "badbeat_stats";
 export const SCHEDULE = "schedule";
 export const CASHIER = "cashier";
+export const PROMOTIONS = "promotions";
 
-const OWNER_SCOPES = [ACCOUNTS, BADBEAT_ENTRY, BADBEAT_STATS, CASHIER, EMPLOYEES, SCHEDULE, SCOPE_MANAGER];
+const OWNER_SCOPES = [ACCOUNTS, BADBEAT_ENTRY, BADBEAT_STATS, CASHIER, EMPLOYEES, PROMOTIONS, SCHEDULE, SCOPE_MANAGER];
 
 export function effectiveScopes(input: {
   isOwner: boolean;

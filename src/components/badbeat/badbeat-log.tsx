@@ -4,6 +4,8 @@ import {
   BarChart3,
   Calendar,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Coins,
   Download,
   Hash,
@@ -19,7 +21,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type PointerEvent, type ReactNode } from "react";
 
 import { SwitchButton } from "@/components/employees/switch-button";
 import { TimeField } from "@/components/employees/time-field";
@@ -36,7 +38,6 @@ import {
   badbeatTrend,
   orderBadbeat,
   priceBadbeat,
-  type BadbeatPeriod,
   type BadbeatSortKey,
   type BadbeatTrendPoint,
 } from "@/lib/badbeat/stats";
@@ -82,13 +83,18 @@ type Copy = {
   period: string;
   thisMonth: string;
   thisWeek: string;
+  thisYear: string;
   allTime: string;
+  previous: string;
+  next: string;
   periodTotal: string;
   periodEntries: string;
   averageCustomers: string;
   add: string;
   edit: string;
   remove: string;
+  confirmTitle: string;
+  confirmBody: string;
   save: string;
   cancel: string;
   empty: string;
@@ -159,6 +165,31 @@ function utcDay(date: string) {
   return new Date(Date.UTC(year ?? 1970, (month ?? 1) - 1, day ?? 1));
 }
 
+function isoDay(date: Date) {
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
+}
+
+type ListPeriod = "month" | "week" | "year";
+
+function shiftAnchor(anchor: string, period: ListPeriod, direction: -1 | 1) {
+  const date = utcDay(anchor);
+  if (period === "week") date.setUTCDate(date.getUTCDate() + direction * 7);
+  else if (period === "year") date.setUTCFullYear(date.getUTCFullYear() + direction, 0, 1);
+  else date.setUTCMonth(date.getUTCMonth() + direction, 1);
+  return isoDay(date);
+}
+
+function periodStarts(period: ListPeriod, firstDate: string | undefined, today: string) {
+  const last = badbeatPeriodRange(period, today).start;
+  const starts: string[] = [];
+  let cursor = badbeatPeriodRange(period, firstDate && firstDate < today ? firstDate : today).start;
+  while (cursor <= last && starts.length < 520) {
+    starts.push(cursor);
+    cursor = shiftAnchor(cursor, period, 1);
+  }
+  return starts.length > 0 ? starts : [last];
+}
+
 function money(amount: number, locale: string) {
   return new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
 }
@@ -185,6 +216,7 @@ export function BadbeatLog({
   const today = useMemo(() => nowDraft().date, []);
   const [rows, setRows] = useState(entries);
   const [editing, setEditing] = useState<BadbeatRow | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<BadbeatRow | null>(null);
   const seed = useMemo(() => nowDraft(), []);
   const [date, setDate] = useState(seed.date);
   const [time, setTime] = useState(seed.time);
@@ -193,19 +225,26 @@ export function BadbeatLog({
   const [comment, setComment] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [period, setPeriod] = useState<BadbeatPeriod>("month");
+  const [period, setPeriod] = useState<ListPeriod>("month");
+  const [anchor, setAnchor] = useState(today);
+  const listRef = useRef<HTMLDivElement>(null);
+  const litScroll = useRef<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const [exportFrom, setExportFrom] = useState("");
   const [exportTo, setExportTo] = useState("");
   const [exportFormat, setExportFormat] = useState<DownloadKind>("pdf");
   const [chart, setChart] = useState<"amount" | "customers">("amount");
+  const [litDate, setLitDate] = useState<string | null>(null);
   const [sort, setSort] = useState<{ key: BadbeatSortKey; direction: "asc" | "desc" }>({
     key: "date",
     direction: "desc",
   });
   const priced = useMemo(() => priceBadbeat(rows), [rows]);
   const firstDate = useMemo(() => rows.map((row) => row.date).sort()[0], [rows]);
-  const range = useMemo(() => badbeatPeriodRange(period, today, firstDate), [period, today, firstDate]);
+  const range = useMemo(() => badbeatPeriodRange(period, anchor), [period, anchor]);
+  const currentRange = useMemo(() => badbeatPeriodRange(period, today), [period, today]);
+  const canNext = range.start < currentRange.start;
+  const canPrev = firstDate ? badbeatPeriodRange(period, shiftAnchor(anchor, period, -1)).end >= firstDate : false;
   const periodRows = useMemo(
     () => rows.filter((row) => row.date >= range.start && row.date <= range.end),
     [rows, range],
@@ -217,10 +256,16 @@ export function BadbeatLog({
   const stats = useMemo(() => badbeatStats(rows, today), [rows, today]);
   const insights = useMemo(() => badbeatInsights(periodRows), [periodRows]);
   const trend = useMemo(() => badbeatTrend(rows, range.start, range.end, today), [rows, range, today]);
-  const chartPoints = trend.length > 7 ? trend.slice(-7) : trend;
   const periodCustomers = periodRows.reduce((sum, row) => sum + row.customers, 0);
   const periodTotal = trend.at(-1)?.amount ?? 0;
   const averageCustomers = periodRows.length === 0 ? null : Math.round(periodCustomers / periodRows.length);
+  const periods = useMemo(() => periodStarts(period, firstDate, today), [period, firstDate, today]);
+  const periodIndex = Math.max(0, periods.indexOf(range.start));
+  const historyStart = firstDate && firstDate < today ? firstDate : today;
+
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: 0 });
+  }, [range.start, period]);
 
   async function addEntry(event: FormEvent) {
     event.preventDefault();
@@ -247,6 +292,25 @@ export function BadbeatLog({
     );
   }
 
+  function movePeriod(direction: -1 | 1) {
+    setAnchor((current) => shiftAnchor(current, period, direction));
+  }
+
+  function hoverTrend(date: string | null) {
+    const list = listRef.current;
+    const row = date ? list?.querySelector<HTMLElement>(`[data-badbeat-date="${date}"]`) : null;
+    const next = row ? date : null;
+    setLitDate((current) => (current === next ? current : next));
+    if (litScroll.current === next) return;
+    litScroll.current = next;
+    if (!list || !row) return;
+    const listRect = list.getBoundingClientRect();
+    const rowRect = row.getBoundingClientRect();
+    const header = list.querySelector("thead")?.getBoundingClientRect().height ?? 0;
+    if (rowRect.top >= listRect.top + header && rowRect.bottom <= listRect.bottom) return;
+    list.scrollTo({ top: Math.max(0, list.scrollTop + rowRect.top - listRect.top - header), behavior: "smooth" });
+  }
+
   async function removeEntry(entry: BadbeatRow) {
     const previous = rows;
     setRows((current) => current.filter((item) => item.id !== entry.id));
@@ -260,7 +324,7 @@ export function BadbeatLog({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
+    <div className="flex h-full min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4">
       <header className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="grid size-11 place-items-center rounded-2xl bg-violet-600 text-white shadow-md shadow-violet-950/50">
@@ -286,29 +350,54 @@ export function BadbeatLog({
             <Download size={15} aria-hidden="true" />
             {copy.export}
           </Button>
-          <label className="relative">
-            <span className="sr-only">{copy.period}</span>
-            <Calendar size={15} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-violet-200" aria-hidden="true" />
-            <select
-              value={period}
-              onChange={(event) => setPeriod(event.target.value as BadbeatPeriod)}
-              className="appearance-none rounded-full border border-white/10 bg-[#141226] py-2 pr-8 pl-9 text-sm font-semibold text-white outline-none [color-scheme:dark] focus:border-violet-400/60"
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              className="size-10 rounded-full px-0"
+              aria-label={copy.previous}
+              disabled={!canPrev}
+              onClick={() => movePeriod(-1)}
             >
-              <option value="month">{copy.thisMonth}</option>
-              <option value="week">{copy.thisWeek}</option>
-              <option value="all">{copy.allTime}</option>
-            </select>
-          </label>
+              <ChevronLeft size={16} aria-hidden="true" />
+            </Button>
+            <label className="relative">
+              <span className="sr-only">{copy.period}</span>
+              <Calendar size={15} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-violet-200" aria-hidden="true" />
+              <select
+                value={period}
+                onChange={(event) => {
+                  setPeriod(event.target.value as ListPeriod);
+                  setAnchor(today);
+                }}
+                className="appearance-none rounded-full border border-white/10 bg-[#141226] py-2 pr-8 pl-9 text-sm font-semibold text-white outline-none [color-scheme:dark] focus:border-violet-400/60"
+              >
+                <option value="month">{copy.thisMonth}</option>
+                <option value="week">{copy.thisWeek}</option>
+                <option value="year">{copy.thisYear}</option>
+              </select>
+            </label>
+            <Button
+              type="button"
+              variant="ghost"
+              className="size-10 rounded-full px-0"
+              aria-label={copy.next}
+              disabled={!canNext}
+              onClick={() => movePeriod(1)}
+            >
+              <ChevronRight size={16} aria-hidden="true" />
+            </Button>
+          </div>
           <p className="text-sm text-violet-100/70">{formatRange(range.start, range.end, locale)}</p>
         </div>
       </header>
       <div
         className={cn(
-          "grid gap-4",
-          canSeeStats && "lg:grid-cols-[minmax(0,1fr)_22rem]",
+          "grid min-h-0 flex-1 gap-4 overflow-hidden",
+          canSeeStats && "grid-rows-[minmax(0,1.4fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_22rem] lg:grid-rows-1",
         )}
       >
-        <div className="flex min-w-0 flex-col gap-4">
+        <div className="flex min-h-0 min-w-0 flex-col gap-4 overflow-hidden">
           {canEnter ? (
             <section className="shrink-0 rounded-2xl border border-white/10 bg-[#141226] p-4">
               <h2 className="flex items-center gap-2 font-display text-base font-semibold text-white">
@@ -352,8 +441,8 @@ export function BadbeatLog({
               <Metric icon={Trophy} label={copy.lastWon} value={stats.lastWon === null ? copy.none : money(stats.lastWon, locale)} />
             </div>
           ) : null}
-          <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#141226]">
-            <div className="overflow-x-auto">
+          <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#141226]">
+            <div ref={listRef} className="min-h-0 flex-1 overflow-auto overscroll-contain">
               {ordered.length === 0 ? (
                 <p className="px-4 py-6 text-sm text-violet-100/70">{copy.empty}</p>
               ) : (
@@ -371,7 +460,14 @@ export function BadbeatLog({
                   </thead>
                   <tbody>
                     {ordered.map((entry) => (
-                      <tr key={entry.id}>
+                      <tr
+                        key={entry.id}
+                        data-badbeat-date={entry.date}
+                        className={cn(
+                          entry.date === litDate &&
+                            "[&>td]:bg-violet-500/25 [&>td]:shadow-[inset_0_0_16px_rgba(196,181,253,0.75)]",
+                        )}
+                      >
                         <td className="border-t border-white/5 px-4 py-3 text-white">{formatDate(entry.date, locale)}</td>
                         <td className="border-t border-white/5 px-3 py-3 tabular-nums text-white">{entry.time}</td>
                         <td className="border-t border-white/5 px-3 py-3 tabular-nums text-violet-100/80">{entry.customers}</td>
@@ -395,7 +491,7 @@ export function BadbeatLog({
                                 <Pencil size={14} aria-hidden="true" />
                                 {copy.edit}
                               </Button>
-                              <Button type="button" variant="ghost" className="rounded-full text-rose-100" onClick={() => void removeEntry(entry)}>
+                              <Button type="button" variant="ghost" className="rounded-full text-rose-100" onClick={() => setPendingDelete(entry)}>
                                 <Trash2 size={14} aria-hidden="true" />
                                 {copy.remove}
                               </Button>
@@ -408,10 +504,37 @@ export function BadbeatLog({
                 </table>
               )}
             </div>
+            <div className="flex shrink-0 items-center justify-between gap-3 border-t border-white/10 px-4 py-2">
+              <p className="text-sm tabular-nums text-violet-100/60">
+                {periodIndex + 1} / {periods.length}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-9 rounded-full px-3"
+                  disabled={!canPrev}
+                  onClick={() => movePeriod(-1)}
+                >
+                  <ChevronLeft size={15} aria-hidden="true" />
+                  {copy.previous}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-9 rounded-full px-3"
+                  disabled={!canNext}
+                  onClick={() => movePeriod(1)}
+                >
+                  {copy.next}
+                  <ChevronRight size={15} aria-hidden="true" />
+                </Button>
+              </div>
+            </div>
           </section>
         </div>
         {canSeeStats ? (
-          <div className="flex flex-col gap-4">
+          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto overscroll-contain">
             <section className="rounded-2xl border border-white/10 bg-[#141226] p-4">
               <h2 className="flex items-center gap-2 font-display text-base font-semibold text-white">
                 <BarChart3 size={16} className="text-violet-300" aria-hidden="true" />
@@ -436,7 +559,7 @@ export function BadbeatLog({
                   <ChartToggle pressed={chart === "customers"} onClick={() => setChart("customers")}>{copy.customers}</ChartToggle>
                 </div>
               </div>
-              <TrendChart points={chartPoints} mode={chart} locale={locale} />
+              <TrendChart points={trend} mode={chart} locale={locale} onHover={hoverTrend} />
             </section>
             <div className="grid grid-cols-3 gap-2">
               <Mini icon={Calendar} label={copy.periodTotal} value={money(periodTotal, locale)} />
@@ -454,6 +577,8 @@ export function BadbeatLog({
           format={exportFormat}
           onFrom={setExportFrom}
           onTo={setExportTo}
+          allFrom={historyStart}
+          allTo={today}
           onFormat={setExportFormat}
           onClose={() => setExportOpen(false)}
           onDownload={() => {
@@ -504,6 +629,18 @@ export function BadbeatLog({
             else if (exportFormat === "pdf") downloadBlob(name, badbeatPdf(report, locale), "pdf");
             else downloadBlob(name, reportXlsx(report), "xlsx");
             setExportOpen(false);
+          }}
+        />
+      ) : null}
+      {pendingDelete ? (
+        <ConfirmDelete
+          copy={copy}
+          summary={`${formatDate(pendingDelete.date, locale)} · ${pendingDelete.time}`}
+          onClose={() => setPendingDelete(null)}
+          onConfirm={() => {
+            const entry = pendingDelete;
+            setPendingDelete(null);
+            void removeEntry(entry);
           }}
         />
       ) : null}
@@ -571,7 +708,7 @@ function Metric({ icon: Icon, label, value, highlight = false }: { icon: LucideI
       </span>
       <span className="min-w-0">
         <span className="block truncate text-xs text-violet-100/60">{label}</span>
-        <span className="block truncate font-display text-lg font-semibold tabular-nums text-white">{value}</span>
+        <span className="block font-display text-base font-semibold leading-tight tabular-nums text-white">{value}</span>
       </span>
     </div>
   );
@@ -615,7 +752,18 @@ function ChartToggle({ pressed, onClick, children }: { pressed: boolean; onClick
   );
 }
 
-function TrendChart({ points, mode, locale }: { points: BadbeatTrendPoint[]; mode: "amount" | "customers"; locale: string }) {
+function TrendChart({
+  points,
+  mode,
+  locale,
+  onHover,
+}: {
+  points: BadbeatTrendPoint[];
+  mode: "amount" | "customers";
+  locale: string;
+  onHover: (date: string | null) => void;
+}) {
+  const [active, setActive] = useState<number | null>(null);
   const values = points.map((point) => (mode === "amount" ? point.amount : point.customers));
   const peak = Math.max(1, ...values);
   const step = Math.pow(10, Math.floor(Math.log10(peak))) / 2 || 1;
@@ -635,9 +783,33 @@ function TrendChart({ points, mode, locale }: { points: BadbeatTrendPoint[]; mod
   const ticks = [0, 1, 2, 3, 4].map((index) => Math.round((max / 4) * index));
   const labels = [0, Math.floor((points.length - 1) / 2), points.length - 1].filter((index, position, all) => index >= 0 && all.indexOf(index) === position);
 
+  function pointIndex(clientX: number, svg: SVGSVGElement) {
+    const rect = svg.getBoundingClientRect();
+    const x = rect.width === 0 ? left : ((clientX - rect.left) / rect.width) * width;
+    if (points.length <= 1) return 0;
+    const index = Math.round(((x - left) / (width - left)) * (points.length - 1));
+    return Math.max(0, Math.min(points.length - 1, index));
+  }
+
+  function hover(event: PointerEvent<SVGSVGElement>) {
+    if (points.length === 0) return;
+    const index = pointIndex(event.clientX, event.currentTarget);
+    setActive((current) => (current === index ? current : index));
+    onHover(points[index]?.date ?? null);
+  }
+
   return (
     <figure className="mt-3">
-      <svg viewBox={`0 0 ${width} ${height}`} className="h-40 w-full" role="img">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="h-40 w-full cursor-pointer"
+        role="img"
+        onPointerMove={hover}
+        onPointerLeave={() => {
+          setActive(null);
+          onHover(null);
+        }}
+      >
         <defs>
           <linearGradient id="badbeat-trend-fill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.45" />
@@ -657,9 +829,14 @@ function TrendChart({ points, mode, locale }: { points: BadbeatTrendPoint[]; mod
         })}
         {area ? <path d={area} fill="url(#badbeat-trend-fill)" /> : null}
         {line ? <path d={line} fill="none" stroke="#c4b5fd" strokeWidth="0.8" strokeLinejoin="round" strokeLinecap="round" /> : null}
-        {coords.map((point, index) => (
-          <circle key={points[index]?.date ?? index} cx={point.x} cy={point.y} r="1.1" fill="#ddd6fe" />
-        ))}
+        {points.length <= 40
+          ? coords.map((point, index) => (
+              <circle key={points[index]?.date ?? index} cx={point.x} cy={point.y} r="1.1" fill="#ddd6fe" />
+            ))
+          : null}
+        {active !== null && coords[active] ? (
+          <circle cx={coords[active].x} cy={coords[active].y} r="1.8" fill="#ffffff" stroke="#c4b5fd" strokeWidth="0.6" />
+        ) : null}
       </svg>
       <div className="flex justify-between pl-8 text-[11px] text-violet-100/45">
         {labels.map((index) => (
@@ -674,6 +851,8 @@ function ExportDialog({
   copy,
   from,
   to,
+  allFrom,
+  allTo,
   format,
   onFrom,
   onTo,
@@ -684,6 +863,8 @@ function ExportDialog({
   copy: Copy;
   from: string;
   to: string;
+  allFrom: string;
+  allTo: string;
   format: DownloadKind;
   onFrom: (value: string) => void;
   onTo: (value: string) => void;
@@ -714,6 +895,20 @@ function ExportDialog({
         <h2 id="badbeat-export-title" className="font-display text-lg font-semibold text-white">
           {copy.export}
         </h2>
+        <button
+          type="button"
+          aria-pressed={from === allFrom && to === allTo}
+          onClick={() => {
+            onFrom(allFrom);
+            onTo(allTo);
+          }}
+          className={cn(
+            "mt-4 rounded-full px-3 py-1.5 text-sm font-semibold",
+            from === allFrom && to === allTo ? "bg-violet-600 text-white" : "bg-white/5 text-violet-100/70 hover:text-white",
+          )}
+        >
+          {copy.allTime}
+        </button>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div className="grid gap-1.5">
             <Label htmlFor="badbeat-export-from">{copy.from}</Label>
@@ -754,6 +949,56 @@ function ExportDialog({
           </Button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function ConfirmDelete({
+  copy,
+  summary,
+  onClose,
+  onConfirm,
+}: {
+  copy: Copy;
+  summary: string;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onMouseDown={onClose}>
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="badbeat-delete-title"
+        aria-describedby="badbeat-delete-body"
+        className="w-full max-w-md rounded-2xl border border-white/10 bg-[#141226] p-5 shadow-lg shadow-black/40"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <h2 id="badbeat-delete-title" className="font-display text-lg font-semibold text-white">
+          {copy.confirmTitle}
+        </h2>
+        <p id="badbeat-delete-body" className="mt-2 text-sm text-violet-100/70">
+          {copy.confirmBody}
+        </p>
+        <p className="mt-3 text-sm font-semibold text-white">{summary}</p>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            {copy.cancel}
+          </Button>
+          <Button type="button" variant="danger" onClick={onConfirm}>
+            <Trash2 size={15} aria-hidden="true" />
+            {copy.remove}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

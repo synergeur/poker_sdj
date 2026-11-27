@@ -27,6 +27,7 @@ test("a month range keeps the jackpot through today", () => {
   ];
   assert.deepEqual(badbeatPeriodRange("month", "2026-11-24"), { start: "2026-11-01", end: "2026-11-30" });
   assert.deepEqual(badbeatPeriodRange("week", "2026-11-24"), { start: "2026-11-23", end: "2026-11-29" });
+  assert.deepEqual(badbeatPeriodRange("year", "2026-11-24"), { start: "2026-01-01", end: "2026-12-31" });
   const trend = badbeatTrend(entries, "2026-11-01", "2026-11-30", "2026-11-24");
   assert.equal(trend[0]?.date, "2026-11-01");
   assert.equal(trend[0]?.amount, 0);

@@ -40,7 +40,7 @@ export type BadbeatInsights = {
   wins: number;
 };
 
-export type BadbeatPeriod = "month" | "week" | "all";
+export type BadbeatPeriod = "month" | "week" | "year" | "all";
 
 export type BadbeatTrendPoint = {
   date: string;
@@ -72,6 +72,11 @@ export function badbeatPeriodRange(period: BadbeatPeriod, today: string, firstDa
   if (period === "month") {
     const start = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), 1));
     const end = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth() + 1, 0));
+    return { start: isoDate(start), end: isoDate(end) };
+  }
+  if (period === "year") {
+    const start = new Date(Date.UTC(current.getUTCFullYear(), 0, 1));
+    const end = new Date(Date.UTC(current.getUTCFullYear(), 11, 31));
     return { start: isoDate(start), end: isoDate(end) };
   }
   const monday = new Date(current);
